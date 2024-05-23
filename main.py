@@ -533,6 +533,14 @@ def read_station():
         optionmenu_var = ctk.StringVar(value="Station..")
         station_menu.configure(variable=optionmenu_var)
 
+    ##
+    min_label_value.configure(text="")
+    max_label_value.configure(text="")
+    selected_start_label_year.configure(text="")
+    selected_start_label_hour.configure(text="")
+    selected_end_label_year.configure(text="")
+    selected_end_label_hour.configure(text="")
+
     state_changing([station_menu])
 
 def open_file():
