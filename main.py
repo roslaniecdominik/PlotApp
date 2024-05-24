@@ -361,7 +361,40 @@ def create_plot():
                     buttons_line.grid(row=0, column=1, padx=(5, 5))
 
         elif selected_data in triple_plot:
-            print("nope")
+            def plot():
+                fig, ax = plt.subplots(3, 1, figsize=(10,6))
+                
+                for i, layer_name in enumerate(data_listname):
+                    line, = ax[i].plot(time_data["datetime"], time_data[layer_name], color=data_colors[i], linewidth=1, label=layer_name)
+                    ax[i].set_title(layer_name)
+                    ax[i].xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
+                    ax[i].grid(True)
+                    ax[i].legend(loc='center left', bbox_to_anchor=(1, 0.5))
+                    ax[i].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+                    ax[i].ticklabel_format(useOffset=False, axis='y', style='plain')
+
+                extend_time = f"{datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")}  -  {datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")}"
+                ax[0].text(-0.2, 1.5, f"{selected_station}, {extend_time}", transform=ax[0].transAxes, va='top', ha='left', fontsize=11)
+                ax[0].text(-0.1, 1.2, '{:>13}'.format('[m]'), transform=ax[0].transAxes, va='top', ha='left', fontsize=10)
+                ax[-1].set_xlabel(xaxis_label, font="Verdana")
+
+                fig.tight_layout()
+                plot_objects = []
+                return plot_objects, fig, ax
+
+            def layer_buttons(ax):
+                for i, ax in enumerate(ax):
+                    layer_frame = ctk.CTkFrame(layers_frame)
+                    layer_frame.pack(anchor="w", padx=10, pady=5)
+
+                    # Buttons
+                    toggle_button = ctk.CTkCheckBox(layer_frame, text=data_listname[i], command=lambda line=ax.get_lines()[0]: toggle_visibility(line))
+                    toggle_button.grid(row=0, column=0)
+                    toggle_button.select()
+
+                    # Buttons line
+                    buttons_line = ctk.CTkFrame(layer_frame, width=50, height=5, fg_color=data_colors[i])
+                    buttons_line.grid(row=0, column=2, padx=(0, 5))
 
         data_listname, data_colors = match_data(selected_data)
 
