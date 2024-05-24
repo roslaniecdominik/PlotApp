@@ -257,6 +257,17 @@ def state_changing(list):
         for i in list:
             i.configure(state="normal")
 
+def timeLabel_clearing():
+        text = [min_label_value, max_label_value, selected_start_label_year, selected_start_label_hour, selected_end_label_year, selected_end_label_hour]
+        [i.configure(text="") for i in text]
+
+        entry = [start_year_entry, start_hour_entry, end_year_entry, end_hour_entry]
+        [i.delete(0, ctk.END) for i in entry]
+
+        slider = [start_year_slider, start_hour_slider, end_year_slider, end_hour_slider]
+        [i.configure(state="disabled") for i in slider]
+
+
 def loading_animation():
     global color_index, loading_check
     
@@ -424,6 +435,8 @@ def create_plot():
 def read_time():
     global data, selected_data, filepath, loading_check, time, time_dif
 
+    show_plot_button.configure(state="disabled")
+
     selected_data = data_menu.get()
 
     filepath = []
@@ -493,6 +506,8 @@ def read_time_in_thread(event):
 def read_data(event):
     global data_dict, loading_check, filepaths_cut, selected_station
 
+    show_plot_button.configure(state="disabled")
+
     selected_station = station_menu.get()
     filepaths_cut = [filepath for filepath in filepaths if selected_station in filepath]
 
@@ -514,8 +529,8 @@ def read_data(event):
 
     loading_check = False
     loading_animation()
-    show_plot_button.configure(state="disabled")
 
+    timeLabel_clearing()
     state_changing([data_menu])
 
 def read_data_in_thread(event):
@@ -566,13 +581,8 @@ def read_station():
         optionmenu_var = ctk.StringVar(value="Station..")
         station_menu.configure(variable=optionmenu_var)
 
-    ##
-    min_label_value.configure(text="")
-    max_label_value.configure(text="")
-    selected_start_label_year.configure(text="")
-    selected_start_label_hour.configure(text="")
-    selected_end_label_year.configure(text="")
-    selected_end_label_hour.configure(text="")
+ 
+    timeLabel_clearing()
 
     state_changing([station_menu])
 
