@@ -441,12 +441,10 @@ def read_time():
 
     filepath = []
     for key, value in data_dict.items():
-
         if value == selected_data:
             for i in filepaths_cut:
                 with open(i, "r") as file:
                     first_row = file.readline()
-                    
                     if key in first_row:
                         filepath.append(i)
 
@@ -515,14 +513,17 @@ def read_data(event):
     for filepath in filepaths_cut:
         with open(filepath, "r") as file:
             first_row = file.readline()
-            
             for i in data_dict:
                 if i in first_row:
                     if i not in various_data:
                         various_data.append(i)
+    value_to_add = []
+    for key, value in data_dict.items():
+        if key in various_data:
+            value_to_add.append(value)
+    
+    data_menu.configure(values=value_to_add)
 
-
-    data_menu.configure(values=data_dict.values())
     optionmenu_var = ctk.StringVar(value="Data..")
     data_menu.configure(variable=optionmenu_var)
 
