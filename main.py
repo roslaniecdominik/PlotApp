@@ -90,7 +90,7 @@ def year_slider_event(id, slider1, entry1, entry2, time):
    
     if entry2.get() !="":
 
-        if entry2.get() == str(time).split()[0]: #pasek się rusza ale nie zmienia etykiety
+        if entry2.get() == str(time).split()[0]: #the strip moves but doesn't change the label
 
             if id == "start":
                 selected_start_label_year.configure(text=entry2.get())
@@ -304,10 +304,17 @@ def create_plot():
 
     else:
         time_data = data.loc[(data['datetime'] >= start_time) & (data['datetime'] <= end_time)]
+        
+        data_listname, x = match_data(selected_data)
+        
+        cut_column = data_listname
+        cut_column.insert(0, "datetime")
+        cut_data = time_data[cut_column]
+        
 
         time_diff = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") - datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
 
-        if (time_diff > timedelta(days=365*2)):
+        if (time_diff > timedelta(days=365*2)): # individual function
             xaxis_set = "%y"
             xaxis_label = "TIME [year]"
         elif (time_diff <= timedelta(days=365*2)) and (time_diff > timedelta(days=6*31)):
@@ -332,7 +339,6 @@ def create_plot():
             xaxis_set = "%Y-%m-%d %H:%M"
             xaxis_label = "TIME [year-month-day hour:min]"
 
-
         if selected_data in single_plot:
 
             def plot():
@@ -342,7 +348,7 @@ def create_plot():
                 plot_objects = []
 
                 for layer_name, color in zip(data_listname, data_colors):
-                    plots[layer_name], = ax.plot(time_data["datetime"], time_data[layer_name], color=color, linewidth=1, label=layer_name)
+                    plots[layer_name], = ax.plot(cut_data["datetime"], cut_data[layer_name], color=color, linewidth=1, label=layer_name)
                     plot_objects.append(plots[layer_name])
 
                 ax.set_title(selected_data, font="Verdana", fontsize=14, fontweight="light")
@@ -376,7 +382,7 @@ def create_plot():
                 fig, ax = plt.subplots(3, 1, figsize=(10,6))
                 
                 for i, layer_name in enumerate(data_listname):
-                    line, = ax[i].plot(time_data["datetime"], time_data[layer_name], color=data_colors[i], linewidth=1, label=layer_name)
+                    line, = ax[i].plot(cut_data["datetime"], cut_data[layer_name], color=data_colors[i], linewidth=1, label=layer_name)
                     ax[i].set_title(layer_name)
                     ax[i].xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
                     ax[i].grid(True)
@@ -517,6 +523,7 @@ def read_data(event):
                 if i in first_row:
                     if i not in various_data:
                         various_data.append(i)
+
     value_to_add = []
     for key, value in data_dict.items():
         if key in various_data:
@@ -559,15 +566,15 @@ def read_station():
             for i in range(len(filepaths)):
                 filepath = filepaths[i]
                 slash_id = filepath.rfind("/")
-
-                digit_id = filepath.find(next(filter(str.isdigit, filepath[slash_id:])))
-                station = filepath[slash_id + 1: digit_id]
-
+                reduced_filepath = filepath[slash_id+1:]
+                _id = reduced_filepath.find("_")
+                station = reduced_filepath[:_id]
+                
                 if station not in station_list:
                     station_list.append(station)
 
         except: #messagebox "wrong file name"
-            print("WRONG FILE NAME")
+            messagebox.showinfo("WRONG FILE NAME")
 
         show_plot_button.configure(state="disabled")
         return(station_list)
