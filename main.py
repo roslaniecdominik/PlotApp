@@ -1,29 +1,20 @@
 import customtkinter as ctk
-from datetime import datetime, timedelta
+from datetime import datetime
 from tkinter import filedialog, messagebox
 import threading
 import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib.ticker import ScalarFormatter
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+
+from buttonState import buttonState
+from centerWindow import center_window
+from dataConfiguration import merge_data, time_column
+from frames import minmax_frame, sliders_frame, selected_time
+from plotCreator import create_plot, defining_data
+from sliderEvent import year_slider_event, hour_slider_event, time_updater
+from timeLabelClearing import timeLabelClearing
 
 
-# -- PLOT CONFIGURATION --
-data_dict = {"PDop": "DOP factors", 
-            "RecX": "REC XYZ", 
-            "RecmX": "RECm XYZ", 
-            "mIonDel": "ION"}
-
-single_plot = ["DOP factors", "ION"]
-triple_plot = ["REC XYZ", "RECm XYZ"]
-
-
-def center_window(window, width, height):
-    screen_width = window.winfo_screenwidth()
-    screen_height = window.winfo_screenheight()
-    x = (screen_width - width) // 2
-    y = (screen_height - height) // 2
-    window.geometry(f"{width}x{height}+{x}+{y}")
+data_dict = defining_data()
+color_index = 0
 
 def date_uploadig():
     if tabview.get() == "Start" and end_year_entry.get() == str(time[0]).split()[0]:
@@ -33,14 +24,9 @@ def date_uploadig():
         end_year_entry.delete(0, ctk.END)
         end_year_entry.insert(0, start_year_entry.get())
 
-from dataConfiguration import merge_data, time_column, match_data 
-from sliderEvent import year_slider_event, hour_slider_event
-from buttonState import buttonState
-from timeLabelClearing import timeLabelClearing
-
 def loading_animation():
     global color_index, loading_check
-    
+    colors = [("grey", "transparent", "transparent"), ("transparent", "grey", "transparent"), ("transparent", "transparent", "grey"), ("transparent", "grey", "transparent")]
     if loading_check:
         color_index = (color_index + 1) % len(colors)
         
@@ -53,157 +39,13 @@ def loading_animation():
         circle1.configure(fg_color="transparent")
         circle2.configure(fg_color="transparent")
         circle3.configure(fg_color="transparent")
-color_index = 0     
-colors = [("grey", "transparent", "transparent"), ("transparent", "grey", "transparent"), ("transparent", "transparent", "grey"), ("transparent", "grey", "transparent")]
+     
 
 #------------------------
 
 
-def create_plot():
-    global loading_check
-
-    def toggle_visibility(name):
-        name.set_visible(not name.get_visible())
-        plt.draw()
-
-    start_time = f"{start_year_entry.get()} {start_hour_entry.get()}"
-    end_time = f"{end_year_entry.get()} {end_hour_entry.get()}"
-
-    if start_time > end_time:
-        messagebox.showinfo("Message", "Starting time must be less than end time")
-
-    else:
-        time_data = data.loc[(data['datetime'] >= start_time) & (data['datetime'] <= end_time)]
-        data_listname, x = match_data(selected_data)
-        cut_column = data_listname
-        cut_column.insert(0, "datetime")
-        cut_data = time_data[cut_column]
-
-        time_diff = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") - datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
-
-        if (time_diff > timedelta(days=365*2)): # individual function
-            xaxis_set = "%y"
-            xaxis_label = "TIME [year]"
-        elif (time_diff <= timedelta(days=365*2)) and (time_diff > timedelta(days=6*31)):
-            xaxis_set = "%y-%m"
-            xaxis_label = "TIME [year-month]"
-        elif (time_diff <= timedelta(days=6*31)) and (time_diff > timedelta(days=2*31)):
-            xaxis_set = "%m-%d"
-            xaxis_label = "TIME [month-day]"
-        elif (time_diff <= timedelta(days=2*31)) and (time_diff > timedelta(days=31)):
-            xaxis_set = "%m-%d %H"
-            xaxis_label = "TIME [month-day hour]"
-        elif (time_diff <= timedelta(days=31)) and (time_diff > timedelta(days=1)):
-            xaxis_set = "%d %H:%M"
-            xaxis_label = "TIME [day hour:min]"
-        elif (time_diff <= timedelta(hours=24)) and (time_diff > timedelta(hours=1)):
-            xaxis_set = "%H:%M"
-            xaxis_label = "TIME [hour:min]"
-        elif time_diff < timedelta(minutes=60):
-            xaxis_set = "%M:%S"
-            xaxis_label = "TIME [min:sec]"
-        else:
-            xaxis_set = "%Y-%m-%d %H:%M"
-            xaxis_label = "TIME [year-month-day hour:min]"
-
-        if selected_data in single_plot:
-
-            def plot():
-                fig, ax = plt.subplots(figsize=(10,6))
-                
-                plots = {}
-                plot_objects = []
-
-                for layer_name, color in zip(data_listname, data_colors):
-                    plots[layer_name], = ax.plot(cut_data["datetime"], cut_data[layer_name], color=color, linewidth=1, label=layer_name)
-                    plot_objects.append(plots[layer_name])
-
-                ax.set_title(selected_data, font="Verdana", fontsize=14, fontweight="light")
-                ax.set_xlabel(xaxis_label, font="Verdana")
-                ax.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
-                ax.grid(True)
-                ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-                ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
-                ax.ticklabel_format(useOffset=False, axis='y', style='plain')
-                extend_time = f"{datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")}  -  {datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")}"
-                ax.text(-0.12, 1.10, f"{selected_station}, {extend_time}", transform=ax.transAxes, va='top', ha='left', fontsize=11)
-
-                return plot_objects, fig, ax
-            
-            def layer_buttons(ax):
-                for i, layer_name in enumerate(data_listname):
-                    layer_frame = ctk.CTkFrame(layers_frame)
-                    layer_frame.pack(anchor="w", padx=10, pady=5)
-
-                    # Buttons
-                    toggle_button = ctk.CTkCheckBox(layer_frame, text=layer_name, command=lambda idx=i: toggle_visibility(data_list[idx]))
-                    toggle_button.grid(row=0, column=0)
-                    toggle_button.select()
-
-                    # Buttons line
-                    buttons_line = ctk.CTkFrame(layer_frame, width=50, height=5, fg_color=data_colors[i])
-                    buttons_line.grid(row=0, column=1, padx=(5, 5))
-
-        elif selected_data in triple_plot:
-            def plot():
-                fig, ax = plt.subplots(3, 1, figsize=(10,6))
-                
-                for i, layer_name in enumerate(data_listname):
-                    line, = ax[i].plot(cut_data["datetime"], cut_data[layer_name], color=data_colors[i], linewidth=1, label=layer_name)
-                    ax[i].set_title(layer_name)
-                    ax[i].xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
-                    ax[i].grid(True)
-                    ax[i].legend(loc='center left', bbox_to_anchor=(1, 0.5))
-                    ax[i].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
-                    ax[i].ticklabel_format(useOffset=False, axis='y', style='plain')
-
-                extend_time = f"{datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")}  -  {datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")}"
-                ax[0].text(-0.2, 1.5, f"{selected_station}, {extend_time}", transform=ax[0].transAxes, va='top', ha='left', fontsize=11)
-                ax[0].text(-0.1, 1.2, '{:>13}'.format('[m]'), transform=ax[0].transAxes, va='top', ha='left', fontsize=10)
-                ax[-1].set_xlabel(xaxis_label, font="Verdana")
-
-                fig.tight_layout()
-                plot_objects = []
-                return plot_objects, fig, ax
-
-            def layer_buttons(ax):
-                for i, ax in enumerate(ax):
-                    layer_frame = ctk.CTkFrame(layers_frame)
-                    layer_frame.pack(anchor="w", padx=10, pady=5)
-
-                    # Buttons
-                    toggle_button = ctk.CTkCheckBox(layer_frame, text=data_listname[i], command=lambda line=ax.get_lines()[0]: toggle_visibility(line))
-                    toggle_button.grid(row=0, column=0)
-                    toggle_button.select()
-
-                    # Buttons line
-                    buttons_line = ctk.CTkFrame(layer_frame, width=50, height=5, fg_color=data_colors[i])
-                    buttons_line.grid(row=0, column=2, padx=(0, 5))
-
-        data_listname, data_colors = match_data(selected_data)
-
-        plot_objects, fig, ax = plot()
-        data_list = plot_objects
-
-        new_window = ctk.CTkToplevel(app)
-        new_window.title("PLOT")
-
-        center_window(new_window, 1200, 650)
-
-        layers_frame = ctk.CTkFrame(new_window,)
-        layers_frame.pack(side=ctk.RIGHT, fill=ctk.Y)
-
-        label = ctk.CTkLabel(layers_frame, text="Layers", font=("Helvetica", 22))
-        label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 50))
-
-        # Layer buttons
-        layer_buttons(ax)
-
-        canvas_plot = FigureCanvasTkAgg(fig, master=new_window)
-        canvas_plot.get_tk_widget().pack(fill=ctk.BOTH, expand=True)
-
-        toolbar = NavigationToolbar2Tk(canvas_plot, new_window)
-        toolbar.update()
+def create_plot_handler(): 
+    create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, data, selected_data, selected_station, app)
 
 def read_time():
     global data, selected_data, filepath, loading_check, time, time_dif
@@ -233,23 +75,12 @@ def read_time():
     min_label_value.configure(text=min(data["datetime"]))
     max_label_value.configure(text=max(data["datetime"]))
     
-    def time_updater (time, year_entry, hour_entry, year_slider, selected_year_label, selected_hour_label):
-        year_entry.delete(0, ctk.END)
-        year_entry.insert(0, time.strftime("%Y-%m-%d"))
-        
-        hour_entry.delete(0, ctk.END)
-        hour_entry.insert(0, time.strftime("%H:%M:%S"))
 
-        year_slider.configure(from_=0, to=time_dif, number_of_steps=time_dif)
-
-        selected_year_label.configure(text=time.strftime("%Y-%m-%d"))
-        selected_hour_label.configure(text=time.strftime("%H:%M:%S"))
-
-    time_updater (time[0], start_year_entry, start_hour_entry, start_year_slider, selected_start_label_year,  selected_start_label_hour)
+    time_updater (time[0], start_year_entry, start_hour_entry, start_year_slider, selected_start_label_year,  selected_start_label_hour, time_dif)
     start_minute = (datetime.strptime(time[0].strftime("%H:%M:%S"), "%H:%M:%S")).minute * 2
     start_hour_slider.configure(from_= start_minute, to=24*60*2-1, number_of_steps=24*60*2-1 - start_minute)
 
-    time_updater (time[-1], end_year_entry, end_hour_entry, end_year_slider, selected_end_label_year, selected_end_label_hour)
+    time_updater (time[-1], end_year_entry, end_hour_entry, end_year_slider, selected_end_label_year, selected_end_label_hour, time_dif)
     end_minute = (datetime.strptime(time[-1].strftime("%H:%M:%S"), "%H:%M:%S")).minute * 2
     end_hour_slider.configure(from_=0, to=24*60*2-1-end_minute, number_of_steps=24*60*2-1 - end_minute)
 
@@ -260,7 +91,6 @@ def read_time():
     
     if time_dif != 0:
         buttonState([start_year_slider, end_year_slider])
-
 
 def read_time_in_thread(event):
     global loading_check
@@ -413,20 +243,8 @@ data_menu.pack(side=ctk.RIGHT)
 MinMax_section = ctk.CTkFrame(app,fg_color="transparent", height=30)
 MinMax_section.pack(side=ctk.TOP, fill=ctk.X, expand=True, padx=100, pady=(5,0))
 
-def minmax_frame(text):
-    section = ctk.CTkFrame(MinMax_section, fg_color="transparent")
-    section.pack(side=ctk.LEFT, fill=ctk.X, expand=True)
-
-    label = ctk.CTkLabel(section, text=text, font=("Helvetica", 13), text_color="grey")
-    label.pack(side=ctk.TOP, fill=ctk.X, padx=35)
-
-    label_value = ctk.CTkLabel(section, text="", font=("Helvetica", 15))
-    label_value.pack(side=ctk.TOP, fill=ctk.X, padx=35)
-
-    return label, label_value
-
-min_label, min_label_value = minmax_frame("Minumum time")
-max_label, max_label_value = minmax_frame("Maximum time")
+min_label, min_label_value = minmax_frame("Minumum time", MinMax_section)
+max_label, max_label_value = minmax_frame("Maximum time", MinMax_section)
 
 
 # -Loading animation section-
@@ -451,28 +269,20 @@ tabview.add("End")
 time = [0]
 time_dif = 0
 
-def sliders_frame(tab_text, date_text):
-    frame = ctk.CTkFrame(tabview.tab(tab_text))
-    frame.pack(side=ctk.TOP, pady=5)
-    label = ctk.CTkLabel(frame, text=date_text)
-    label.pack(side=ctk.LEFT, pady=5)
-    entry = ctk.CTkEntry(frame, placeholder_text="", font=("Helvetica", 15), justify="center", border_width=0)
-    entry.pack(side=ctk.LEFT, padx=10)
-    return entry
-
-start_year_entry = sliders_frame("Start", "year - month - day")
+start_year_entry = sliders_frame("Start", "year - month - day", tabview)
 start_year_slider = ctk.CTkSlider(tabview.tab("Start"), height=20, from_=0, to=10, number_of_steps=10, state="disabled", command=lambda value: year_slider_event("start", start_year_slider, start_year_entry, end_year_entry, time[0], selected_start_label_year, selected_end_label_year, time_dif))
 start_year_slider.pack(fill=ctk.X, pady=(5,15))
 
-start_hour_entry = sliders_frame("Start", "hour : minute : second")
+
+start_hour_entry = sliders_frame("Start", "hour : minute : second", tabview)
 start_hour_slider = ctk.CTkSlider(tabview.tab("Start"), height=20, from_=0, to=24*60*2-1, number_of_steps=24*60*2-1, state="disabled", command=lambda value: hour_slider_event("start", str(time[0]).split(" ")[1], time[0].strftime("%Y-%m-%d"), start_year_entry, end_year_entry, start_hour_entry, end_hour_entry, start_hour_slider, selected_start_label_hour, selected_end_label_hour))
 start_hour_slider.pack(fill=ctk.X, pady=(5,0))
 
-end_year_entry = sliders_frame("End", "year - month - day")
+end_year_entry = sliders_frame("End", "year - month - day", tabview)
 end_year_slider = ctk.CTkSlider(tabview.tab("End"), height=20, from_=0, to=10, number_of_steps=10, state="disabled", command=lambda value: year_slider_event("end", end_year_slider, end_year_entry, start_year_entry, time[-1], selected_start_label_year, selected_end_label_year, time_dif))
 end_year_slider.pack(fill=ctk.X, pady=(5,15))
 
-end_hour_entry = sliders_frame("End", "hour : minute : second")
+end_hour_entry = sliders_frame("End", "hour : minute : second", tabview)
 end_hour_slider = ctk.CTkSlider(tabview.tab("End"), height=20, from_=0, to=24*60*2-1, number_of_steps=24*60*2-1, state="disabled", command=lambda value: hour_slider_event("end", str(time[-1]).split(" ")[1], time[-1].strftime("%Y-%m-%d"), end_year_entry, start_year_entry, end_hour_entry, start_hour_entry, end_hour_slider, selected_start_label_hour, selected_end_label_hour))
 end_hour_slider.pack(fill=ctk.X, pady=(5,0))
 
@@ -484,30 +294,19 @@ lowest_section.pack(side=ctk.TOP, fill=ctk.X, pady=10, padx=10)
 right_section = ctk.CTkFrame(lowest_section, fg_color="transparent")
 right_section.pack(side=ctk.RIGHT, fill=ctk.X)
 
-show_plot_button = ctk.CTkButton(right_section, text="Show plot", state="disabled", command=create_plot)
+
+show_plot_button = ctk.CTkButton(right_section, text="Show plot", state="disabled", command=create_plot_handler)
 show_plot_button.pack(side=ctk.RIGHT)
 
 left_section = ctk.CTkFrame(lowest_section, fg_color="transparent")
 left_section.pack(side=ctk.LEFT, fill=ctk.X)
 
-def selected_time (parent, text):
-    frame = ctk.CTkFrame(parent, fg_color="transparent")
-    frame.pack(side=ctk.TOP, fill=ctk.X, expand=True)
-
-    label = ctk.CTkLabel(frame, text=text, font=("Helvetica", 12), text_color="grey")
-    label.pack(side=ctk.LEFT, fill=ctk.X, padx=(20,0))
-    
-    label_date = ctk.CTkLabel(frame, text="", font=("Helvetica", 14))
-    label_date.pack(side=ctk.LEFT, fill=ctk.X, padx=(15,0))
-    
-    label_time = ctk.CTkLabel(frame, text="", font=("Helvetica", 14))
-    label_time.pack(side=ctk.RIGHT, fill=ctk.X, padx=(15,0))
-    return label_date, label_time
-
 selected_start_label_year, selected_start_label_hour = selected_time(left_section, "Start: ")
 
 selected_end_label_year, selected_end_label_hour = selected_time(left_section, "End:  ")
+
 time_label_list = [min_label_value, max_label_value, selected_start_label_year, selected_start_label_hour, selected_end_label_year, 
-                   selected_end_label_hour, start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, start_year_slider, 
-                   start_hour_slider, end_year_slider, end_hour_slider]
-app.mainloop()
+                selected_end_label_hour, start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, start_year_slider, 
+                start_hour_slider, end_year_slider, end_hour_slider]
+
+app.mainloop() 

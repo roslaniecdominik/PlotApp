@@ -1,6 +1,18 @@
 import customtkinter as ctk
 from datetime import datetime, timedelta
 
+def time_updater (time, year_entry, hour_entry, year_slider, selected_year_label, selected_hour_label, time_dif):
+        year_entry.delete(0, ctk.END)
+        year_entry.insert(0, time.strftime("%Y-%m-%d"))
+        
+        hour_entry.delete(0, ctk.END)
+        hour_entry.insert(0, time.strftime("%H:%M:%S"))
+
+        year_slider.configure(from_=0, to=time_dif, number_of_steps=time_dif)
+
+        selected_year_label.configure(text=time.strftime("%Y-%m-%d"))
+        selected_hour_label.configure(text=time.strftime("%H:%M:%S"))
+
 def year_slider_event(id, slider1, entry1, entry2, time, selected_start_label_year, selected_end_label_year, time_dif):
    
     if entry2.get() !="":
