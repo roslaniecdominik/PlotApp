@@ -25,22 +25,6 @@ def center_window(window, width, height):
     y = (screen_height - height) // 2
     window.geometry(f"{width}x{height}+{x}+{y}")
 
-def match_data(data):
-    match data:
-        case "DOP factors":
-            data_listname = ["PDop", "TDop", "HDop", "VDop", "GDop"]
-            data_colors = ["red", "green", "blue", "yellow", "orange"]
-        case "REC XYZ":
-            data_listname = ["RecX", "RecY", "RecZ"]
-            data_colors = ["red", "green", "blue"]
-        case "RECm XYZ":
-            data_listname = ["RecmX", "RecmY", "RecmZ"]
-            data_colors = ["red", "green", "blue"]
-        case "ION":
-            data_listname = ["mIonDel"]
-            data_colors = ["red"]
-    return data_listname, data_colors
-
 def date_uploadig():
     if tabview.get() == "Start" and end_year_entry.get() == str(time[0]).split()[0]:
         start_year_entry.delete(0, ctk.END)
@@ -49,224 +33,10 @@ def date_uploadig():
         end_year_entry.delete(0, ctk.END)
         end_year_entry.insert(0, start_year_entry.get())
 
-def time_column(data):
-        # Removing empty characters
-        data.columns = data.columns.str.strip() 
-        # Time column
-        data["ss"] = data["ss"].abs()
-        data["datetime"] = pd.to_datetime(data["YY"].astype(str) + '-' + 
-                                        data["MM"].astype(str) + '-' + 
-                                        data["DD"].astype(str) + ' ' + 
-                                        data["hh"].astype(str) + ':' + 
-                                        data["mm"].astype(str) + ':' + 
-                                        data["ss"].astype(str))
-        data = data.drop('YY', axis=1)
-        data = data.drop('MM', axis=1)
-        data = data.drop('DD', axis=1)
-        data = data.drop('hh', axis=1)
-        data = data.drop('mm', axis=1)
-        data = data.drop('ss', axis=1)
-        return data
-
-def merge_data():
-    global data
-
-    data_listname, x = match_data(selected_data)
-
-    if len(filepath) > 2:
-        data_to_merge = data
-        data_listname.append("datetime")
-        data_to_merge = data_to_merge[data_listname]
-        for i in range(len(filepath)-1):
-            if i < (len(filepath)-2): 
-                data = pd.read_csv(filepath[i+1], sep=';', index_col=False, skipinitialspace=True)
-                data = time_column(data)
-                data = data[data_listname]
-                merged = pd.concat([data_to_merge, data])
-                data_to_merge = merged
-        data = merged
-
-def year_slider_event(id, slider1, entry1, entry2, time):
-   
-    if entry2.get() !="":
-
-        if entry2.get() == str(time).split()[0]: #the strip moves but doesn't change the label
-
-            if id == "start":
-                selected_start_label_year.configure(text=entry2.get())
-            elif id == "end":
-                selected_end_label_year.configure(text=entry2.get())
-            pass
-
-        else:
-            year = datetime.strptime(entry2.get(), "%Y-%m-%d")
-            if id == "start":
-                slider1.configure(from_=0, to=int((year - time).days+1), number_of_steps=int((year - time).days)+1)
-                selected_date = time + timedelta(days=slider1.get())
-
-            elif id == "end":
-                slider1.configure(from_=0, to=int((time - year).days), number_of_steps=int((time - year).days))
-                selected_date = year + timedelta(days=slider1.get())
-
-            entry1.delete(0, ctk.END)
-            entry1.insert(0, selected_date.strftime("%Y-%m-%d"))
-    else:
-        slider1.configure(from_=0, to=time_dif, number_of_steps=time_dif)
-        selected_date = time + timedelta(days=slider1.get())
-        entry1.delete(0, ctk.END)
-        entry1.insert(0, selected_date.strftime("%Y-%m-%d"))
-
-    if id == "start" and entry2.get() != str(time).split()[0]:
-        selected_start_label_year.configure(text=selected_date.strftime("%Y-%m-%d"))
-    elif id == "end" and entry2.get() != str(time).split()[0]:
-        selected_end_label_year.configure(text=selected_date.strftime("%Y-%m-%d"))
-       
-def hour_slider_event(id, time, date, year_entry1, year_entry2, hour_entry1, hour_entry2, slider1):
-
-    if year_entry1.get() == year_entry2.get() and hour_entry2.get() == time:
-        pass
-
-    elif year_entry1.get() == date and year_entry1.get() == year_entry2.get():
-        parts_from = (str(time)).split(":")
-        hours_from = int(parts_from[0])
-        minutes_from = int(parts_from[1])
-        seconds_from = int(parts_from[2])
-        if seconds_from == 30:
-            hour_from = (hours_from*60 + minutes_from)*2+1
-        else:
-            hour_from = (hours_from*60 + minutes_from)*2
-
-        parts_to = (hour_entry2.get()).split(":")
-        hours_to = int(parts_to[0])
-        minutes_to = int(parts_to[1])
-        seconds_to = int(parts_to[2])
-        if seconds_to == 30:
-            hour_to = (hours_to*60 + minutes_to)*2+1
-        else:
-            hour_to = (hours_to*60 + minutes_to)*2
-
-        
-
-        if id == "start":
-            slider1.configure(from_=hour_from, to=hour_to, number_of_steps=hour_to - hour_from)
-
-            start_hour = datetime.strptime("0:00:00", '%H:%M:%S').time()
-            start_hour = datetime.combine(datetime.today(), start_hour)
-
-            selected_date = (start_hour + timedelta(seconds=slider1.get()*30)).time()
-
-            selected_start_label_hour.configure(text=selected_date)
-        elif id =="end":
-            slider1.configure(from_=hour_to, to=hour_from, number_of_steps=hour_from - hour_to)
-
-            start_hour = datetime.strptime("0:00:00", '%H:%M:%S').time()
-            start_hour = datetime.combine(datetime.today(), start_hour)
-
-            selected_date = (start_hour + timedelta(seconds=slider1.get()*30)).time()
-            selected_end_label_hour.configure(text=selected_date)
-
-        hour_entry1.delete(0, ctk.END)
-        hour_entry1.insert(0, selected_date)
-
-    elif year_entry1.get() == date:
-        parts = (str(time)).split(":")
-        hours = int(parts[0])
-        minutes = int(parts[1])
-        seconds = int(parts[2])
-        if seconds == 30:
-            hour = (hours*60 + minutes)*2+1
-        else:
-            hour = (hours*60 + minutes)*2
-
-        if id == "start":
-            slider1.configure(from_=hour, to=24*60*2-1, number_of_steps=24*60*2-1 - hour)
-
-            start_hour = datetime.strptime("0:00:00", '%H:%M:%S').time()
-            start_hour = datetime.combine(datetime.today(), start_hour)
-
-            selected_date = (start_hour + timedelta(seconds=slider1.get()*30)).time()
-
-            selected_start_label_hour.configure(text=selected_date)
-
-        elif id =="end":
-            slider1.configure(from_=0, to=hour, number_of_steps=hour)
-            
-            start_hour = datetime.strptime("0:00:00", '%H:%M:%S').time()
-            start_hour = datetime.combine(datetime.today(), start_hour)
-            selected_date = (start_hour + timedelta(seconds=slider1.get()*30)).time()
-
-            selected_end_label_hour.configure(text=selected_date)
-
-        hour_entry1.delete(0, ctk.END)
-        hour_entry1.insert(0, selected_date)
-
-    elif year_entry1.get() == year_entry2.get():
-
-        parts = hour_entry2.get().split(":")
-        hours = int(parts[0])
-        minutes = int(parts[1])
-        seconds = int(parts[2])
-        if seconds == 30:
-            hour = (hours*60 + minutes)*2+1
-        else:
-            hour = (hours*60 + minutes)*2
-
-        if id == "start":
-            slider1.configure(from_=0, to=hour, number_of_steps=hour)
-            
-            start_hour = datetime.strptime("0:00:00", '%H:%M:%S').time()
-            start_hour = datetime.combine(datetime.today(), start_hour)
-            selected_date = (start_hour + timedelta(seconds=slider1.get()*30)).time()
-            
-            selected_start_label_hour.configure(text=selected_date)
-
-        elif id =="end":
-            start_hour = datetime.strptime(hour_entry2.get(), '%H:%M:%S').time()
-
-            slider1.configure(from_=0, to=24*60*2-1 - hour, number_of_steps=(24*60*2-1 - hour))
-
-            start_hour = datetime.combine(datetime.today(), start_hour)
-            selected_date = (start_hour + timedelta(seconds=slider1.get()*30)).time()
-
-            selected_end_label_hour.configure(text=selected_date)
-
-        hour_entry1.delete(0, ctk.END)
-        hour_entry1.insert(0, selected_date)
-        
-        
-    else:
-        if id =="start":
-            start_hour = datetime.strptime("0:00:00", '%H:%M:%S').time()
-            start_hour = datetime.combine(datetime.today(), start_hour)
-            selected_date = (start_hour + timedelta(seconds=slider1.get()*30)).time()
-
-            selected_start_label_hour.configure(text=selected_date)
-
-        if id =="end":
-            start_hour = datetime.strptime("0:00:00", '%H:%M:%S').time()
-            start_hour = datetime.combine(datetime.today(), start_hour)
-            selected_date = (start_hour + timedelta(seconds=slider1.get()*30)).time()
-
-            selected_end_label_hour.configure(text=selected_date)
-            
-        slider1.configure(from_=0, to=24*60*2-1, number_of_steps=24*60*2-1)
-        hour_entry1.delete(0, ctk.END)
-        hour_entry1.insert(0, selected_date)
-
-def state_changing(list):
-        for i in list:
-            i.configure(state="normal")
-
-def timeLabel_clearing():
-        text = [min_label_value, max_label_value, selected_start_label_year, selected_start_label_hour, selected_end_label_year, selected_end_label_hour]
-        [i.configure(text="") for i in text]
-
-        entry = [start_year_entry, start_hour_entry, end_year_entry, end_hour_entry]
-        [i.delete(0, ctk.END) for i in entry]
-
-        slider = [start_year_slider, start_hour_slider, end_year_slider, end_hour_slider]
-        [i.configure(state="disabled") for i in slider]
-
+from dataConfiguration import merge_data, time_column, match_data 
+from sliderEvent import year_slider_event, hour_slider_event
+from buttonState import buttonState
+from timeLabelClearing import timeLabelClearing
 
 def loading_animation():
     global color_index, loading_check
@@ -304,13 +74,10 @@ def create_plot():
 
     else:
         time_data = data.loc[(data['datetime'] >= start_time) & (data['datetime'] <= end_time)]
-        
         data_listname, x = match_data(selected_data)
-        
         cut_column = data_listname
         cut_column.insert(0, "datetime")
         cut_data = time_data[cut_column]
-        
 
         time_diff = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") - datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
 
@@ -457,15 +224,8 @@ def read_time():
     data = pd.read_csv(filepath[0], sep=';', index_col=False, skipinitialspace=True)
     data = time_column(data)
 
-    merge_data()
+    data = merge_data(data, selected_data, filepath)
 
-    #----------- MIN MAX SECTION
-    if len(filepath) > 1:
-        data_last = pd.read_csv(filepath[-1], sep=';', index_col=False, skipinitialspace=True)
-        data_last = time_column(data_last)
-        merged = pd.concat([data, data_last])
-       
-        data = merged
     
     time = [datetime.strptime(str(min(data["datetime"])), "%Y-%m-%d %H:%M:%S"), datetime.strptime(str(max(data["datetime"])), "%Y-%m-%d %H:%M:%S")]
     time_dif = int((time[-1] - time[0]).days)
@@ -496,10 +256,11 @@ def read_time():
     loading_check = False
     loading_animation()
 
-    state_changing([show_plot_button, start_hour_slider, end_hour_slider])
+    buttonState([show_plot_button, start_hour_slider, end_hour_slider])
     
     if time_dif != 0:
-        state_changing([start_year_slider, end_year_slider])
+        buttonState([start_year_slider, end_year_slider])
+
 
 def read_time_in_thread(event):
     global loading_check
@@ -538,8 +299,8 @@ def read_data(event):
     loading_check = False
     loading_animation()
 
-    timeLabel_clearing()
-    state_changing([data_menu])
+    timeLabelClearing(*time_label_list)
+    buttonState([data_menu])
 
 def read_data_in_thread(event):
     global loading_check
@@ -589,10 +350,10 @@ def read_station():
         optionmenu_var = ctk.StringVar(value="Station..")
         station_menu.configure(variable=optionmenu_var)
 
- 
-    timeLabel_clearing()
 
-    state_changing([station_menu])
+    timeLabelClearing(*time_label_list)
+
+    buttonState([station_menu])
 
 def open_file():
     global filepaths, loading_check
@@ -671,7 +432,7 @@ max_label, max_label_value = minmax_frame("Maximum time")
 # -Loading animation section-
 circle_section = ctk.CTkFrame(app, fg_color="transparent")
 circle_section.pack(pady=0)
-                            
+
 circle1 = ctk.CTkFrame(circle_section, width=11, height=11, fg_color="transparent")
 circle1.pack(side=ctk.LEFT, padx=2.5)
 circle2 = ctk.CTkFrame(circle_section, width=11, height=11, fg_color="transparent")
@@ -700,19 +461,19 @@ def sliders_frame(tab_text, date_text):
     return entry
 
 start_year_entry = sliders_frame("Start", "year - month - day")
-start_year_slider = ctk.CTkSlider(tabview.tab("Start"), height=20, from_=0, to=10, number_of_steps=10, state="disabled", command=lambda value: year_slider_event("start", start_year_slider, start_year_entry, end_year_entry, time[0]))
+start_year_slider = ctk.CTkSlider(tabview.tab("Start"), height=20, from_=0, to=10, number_of_steps=10, state="disabled", command=lambda value: year_slider_event("start", start_year_slider, start_year_entry, end_year_entry, time[0], selected_start_label_year, selected_end_label_year, time_dif))
 start_year_slider.pack(fill=ctk.X, pady=(5,15))
 
 start_hour_entry = sliders_frame("Start", "hour : minute : second")
-start_hour_slider = ctk.CTkSlider(tabview.tab("Start"), height=20, from_=0, to=24*60*2-1, number_of_steps=24*60*2-1, state="disabled", command=lambda value: hour_slider_event("start", str(time[0]).split(" ")[1], time[0].strftime("%Y-%m-%d"), start_year_entry, end_year_entry, start_hour_entry, end_hour_entry, start_hour_slider))
+start_hour_slider = ctk.CTkSlider(tabview.tab("Start"), height=20, from_=0, to=24*60*2-1, number_of_steps=24*60*2-1, state="disabled", command=lambda value: hour_slider_event("start", str(time[0]).split(" ")[1], time[0].strftime("%Y-%m-%d"), start_year_entry, end_year_entry, start_hour_entry, end_hour_entry, start_hour_slider, selected_start_label_hour, selected_end_label_hour))
 start_hour_slider.pack(fill=ctk.X, pady=(5,0))
 
 end_year_entry = sliders_frame("End", "year - month - day")
-end_year_slider = ctk.CTkSlider(tabview.tab("End"), height=20, from_=0, to=10, number_of_steps=10, state="disabled", command=lambda value: year_slider_event("end", end_year_slider, end_year_entry, start_year_entry, time[-1]))
+end_year_slider = ctk.CTkSlider(tabview.tab("End"), height=20, from_=0, to=10, number_of_steps=10, state="disabled", command=lambda value: year_slider_event("end", end_year_slider, end_year_entry, start_year_entry, time[-1], selected_start_label_year, selected_end_label_year, time_dif))
 end_year_slider.pack(fill=ctk.X, pady=(5,15))
 
 end_hour_entry = sliders_frame("End", "hour : minute : second")
-end_hour_slider = ctk.CTkSlider(tabview.tab("End"), height=20, from_=0, to=24*60*2-1, number_of_steps=24*60*2-1, state="disabled", command=lambda value: hour_slider_event("end", str(time[-1]).split(" ")[1], time[-1].strftime("%Y-%m-%d"), end_year_entry, start_year_entry, end_hour_entry, start_hour_entry, end_hour_slider))
+end_hour_slider = ctk.CTkSlider(tabview.tab("End"), height=20, from_=0, to=24*60*2-1, number_of_steps=24*60*2-1, state="disabled", command=lambda value: hour_slider_event("end", str(time[-1]).split(" ")[1], time[-1].strftime("%Y-%m-%d"), end_year_entry, start_year_entry, end_hour_entry, start_hour_entry, end_hour_slider, selected_start_label_hour, selected_end_label_hour))
 end_hour_slider.pack(fill=ctk.X, pady=(5,0))
 
 
@@ -746,5 +507,7 @@ def selected_time (parent, text):
 selected_start_label_year, selected_start_label_hour = selected_time(left_section, "Start: ")
 
 selected_end_label_year, selected_end_label_hour = selected_time(left_section, "End:  ")
-
+time_label_list = [min_label_value, max_label_value, selected_start_label_year, selected_start_label_hour, selected_end_label_year, 
+                   selected_end_label_hour, start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, start_year_slider, 
+                   start_hour_slider, end_year_slider, end_hour_slider]
 app.mainloop()
