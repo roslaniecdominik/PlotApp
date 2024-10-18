@@ -14,21 +14,26 @@ def time_updater (time, year_entry, hour_entry, year_slider, selected_year_label
         selected_hour_label.configure(text=time.strftime("%H:%M:%S"))
 
 def year_slider_event(id, slider1, entry1, entry2, time, selected_start_label_year, selected_end_label_year, time_dif):
-   
+    
     if entry2.get() !="":
+        if entry2.get() == str(time).split()[0]:
 
-        if entry2.get() == str(time).split()[0]: #the strip moves but doesn't change the label
+            year = datetime.strptime(entry2.get(), "%Y-%m-%d")
 
             if id == "start":
+                slider1.configure(from_=0, to=int((year - time).days)+1, number_of_steps=int((year - time).days)+1)
                 selected_start_label_year.configure(text=entry2.get())
             elif id == "end":
+                slider1.configure(from_=0, to=int((time - year).days)+1, number_of_steps=int((time - year).days+1))
                 selected_end_label_year.configure(text=entry2.get())
             pass
 
         else:
+
             year = datetime.strptime(entry2.get(), "%Y-%m-%d")
+
             if id == "start":
-                slider1.configure(from_=0, to=int((year - time).days+1), number_of_steps=int((year - time).days)+1)
+                slider1.configure(from_=0, to=int((year - time).days), number_of_steps=int((year - time).days))
                 selected_date = time + timedelta(days=slider1.get())
 
             elif id == "end":
@@ -48,7 +53,7 @@ def year_slider_event(id, slider1, entry1, entry2, time, selected_start_label_ye
     elif id == "end" and entry2.get() != str(time).split()[0]:
         selected_end_label_year.configure(text=selected_date.strftime("%Y-%m-%d"))
 
-def hour_slider_event(id, time, date, year_entry1, year_entry2, hour_entry1, hour_entry2, slider1, selected_start_label_hour, selected_end_label_hour): # można
+def hour_slider_event(id, time, date, year_entry1, year_entry2, hour_entry1, hour_entry2, slider1, selected_start_label_hour, selected_end_label_hour): 
 
     if year_entry1.get() == year_entry2.get() and hour_entry2.get() == time:
         pass

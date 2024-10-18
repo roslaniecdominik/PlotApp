@@ -268,7 +268,7 @@ tabview.add("End")
 
 time = [0]
 time_dif = 0
-
+y= 2
 start_year_entry = sliders_frame("Start", "year - month - day", tabview)
 start_year_slider = ctk.CTkSlider(tabview.tab("Start"), height=20, from_=0, to=10, number_of_steps=10, state="disabled", command=lambda value: year_slider_event("start", start_year_slider, start_year_entry, end_year_entry, time[0], selected_start_label_year, selected_end_label_year, time_dif))
 start_year_slider.pack(fill=ctk.X, pady=(5,15))
