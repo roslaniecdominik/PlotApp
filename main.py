@@ -45,7 +45,7 @@ def loading_animation():
 
 
 def create_plot_handler(): 
-    create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, data, selected_data, selected_station, app)
+    create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, data, selected_data, selected_station, station_list, app)
 
 def read_time():
     global data, selected_data, filepath, loading_check, time, time_dif
@@ -140,7 +140,7 @@ def read_data_in_thread(event):
     threading.Thread(target=read_data, args=(event,)).start()
 
 def read_station():
-    global loading_check
+    global loading_check, station_list
 
     if filepaths:
         filename_entry.delete(0, ctk.END)
@@ -222,6 +222,8 @@ station_section.pack(side=ctk.LEFT, fill=ctk.X)
 
 station_label = ctk.CTkLabel(station_section, text="Select station", font=("Helvetica", 18))
 station_label.pack(side=ctk.LEFT, padx=(0,10))
+
+
 
 station_menu_variable = ctk.StringVar(value="...")
 station_menu = ctk.CTkOptionMenu(station_section, width=150, values=[], variable=station_menu_variable, state="disabled", command=read_data_in_thread)

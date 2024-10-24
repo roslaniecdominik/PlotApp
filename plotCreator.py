@@ -19,7 +19,7 @@ triple_plot = ["REC XYZ", "RECm XYZ"]
 
 
 
-def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, data, selected_data, selected_station, app):
+def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, data, selected_data, selected_station, station_list, app):
     global loading_check
 
     def toggle_visibility(name):
@@ -150,14 +150,43 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
 
         center_window(new_window, 1200, 650)
 
-        layers_frame = ctk.CTkFrame(new_window,)
-        layers_frame.pack(side=ctk.RIGHT, fill=ctk.Y)
+        right_frame = ctk.CTkFrame(new_window,)
+        right_frame.pack(side=ctk.RIGHT, fill=ctk.Y)
 
-        label = ctk.CTkLabel(layers_frame, text="Layers", font=("Helvetica", 22))
-        label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 50))
+        
+        layers_frame = ctk.CTkFrame(right_frame)
+        layers_frame.pack(side=ctk.TOP, fill=ctk.Y)
 
-        # Layer buttons
+        layers_label = ctk.CTkLabel(layers_frame, text="Layers", font=("Helvetica", 22))
+        layers_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 50))
+
         layer_buttons(ax)
+
+        
+        print("\n\n\nstation_list" , station_list)
+        print("selected_station" ,selected_station)
+
+        if selected_station in station_list:
+            station2_list = station_list.copy()
+            station2_list.remove(selected_station)
+
+
+        
+
+        secondStation_frame = ctk.CTkFrame(right_frame)
+        secondStation_frame.pack(side=ctk.TOP, fill=ctk.X)
+
+        secondStation_label = ctk.CTkLabel(secondStation_frame, text="Compare data \nwith second station", font=("Helvetica", 16))
+        secondStation_label.pack(side=ctk.TOP, fill=ctk.X, pady=(50, 20))
+
+        station2_menu_variable = ctk.StringVar(value="Select station ...")
+        station2_menu = ctk.CTkOptionMenu(secondStation_frame, width=150, values=[], variable=station2_menu_variable)#, command=read_data_in_thread)
+        station2_menu.pack(side=ctk.TOP, pady=(0, 20))
+        station2_menu.configure(values=station2_list)
+
+        compare_button = ctk.CTkButton(secondStation_frame, text="Compare")
+        compare_button.pack(side=ctk.TOP)
+
 
         canvas_plot = FigureCanvasTkAgg(fig, master=new_window)
         canvas_plot.get_tk_widget().pack(fill=ctk.BOTH, expand=True)
