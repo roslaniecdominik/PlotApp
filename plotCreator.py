@@ -6,8 +6,10 @@ from dataConfiguration import match_data
 from matplotlib.ticker import ScalarFormatter
 from centerWindow import center_window
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from solutionGenerator import solution_generator
 
 def defining_data():
+    global data_dict
     data_dict = {"PDop": "DOP factors", 
                 "RecX": "REC XYZ", 
                 "RecmX": "RECm XYZ", 
@@ -19,8 +21,10 @@ triple_plot = ["REC XYZ", "RECm XYZ"]
 
 
 
-def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, data, selected_data, selected_station, station_list, app):
+def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, data, selected_data, selected_station, station_list, filepaths, app):
     global loading_check
+
+    print("\n\n\n", selected_station, "\n", station_list, "\n\n\n")
 
     def toggle_visibility(name):
         name.set_visible(not name.get_visible())
@@ -36,6 +40,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         time_data = data.loc[(data['datetime'] >= start_time) & (data['datetime'] <= end_time)]
         data_listname, x = match_data(selected_data)
         cut_column = data_listname
+        cut_column.insert(0, "Stat")
         cut_column.insert(0, "datetime")
         cut_data = time_data[cut_column]
 
@@ -163,15 +168,11 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         layer_buttons(ax)
 
         
-        print("\n\n\nstation_list" , station_list)
-        print("selected_station" ,selected_station)
 
         if selected_station in station_list:
             station2_list = station_list.copy()
             station2_list.remove(selected_station)
 
-
-        
 
         secondStation_frame = ctk.CTkFrame(right_frame)
         secondStation_frame.pack(side=ctk.TOP, fill=ctk.X)
@@ -184,8 +185,52 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         station2_menu.pack(side=ctk.TOP, pady=(0, 20))
         station2_menu.configure(values=station2_list)
 
-        compare_button = ctk.CTkButton(secondStation_frame, text="Compare")
+        def comparing_window():
+            selected_station_solution2 = station2_menu.get()
+            selected_station2 = selected_station_solution2.split(" ")[0]
+            selected_solution2 = solution_generator(selected_station_solution2.split("(")[1].split(")")[0])
+
+            filepaths_cut = [filepath for filepath in filepaths if selected_station2 in filepath and selected_solution2 in filepath]
+            
+            filepath = []
+            for key, value in data_dict.items():
+                if value == selected_data:
+                    for i in filepaths_cut:
+                        with open(i, "r") as file:
+                            first_row = file.readline()
+                            if key in first_row:
+                                filepath.append(i)
+            import pandas as pd
+            from dataConfiguration import merge_data, time_column
+            data2 = pd.read_csv(filepath[0], sep=';', index_col=False, skipinitialspace=True) #może gdzieś tu usunąć niepotrzebne kolumny
+            data2 = time_column(data2)
+            data2 = merge_data(data2, selected_data, filepath)
+
+            cut_data2 = data2[cut_column]
+
+
+            cut_data_merged = pd.concat([cut_data, cut_data2])
+            print(cut_data_merged)
+            time_data = cut_data_merged.loc[(cut_data_merged['datetime'] >= start_time) & (cut_data_merged['datetime'] <= end_time)]
+            print(time_data)
+            #zrobienie dataframe | time, x1, y1, z1, x2, y2, z2, dx, dy, dz
+            #1 zrobienie filepath z 2 stacji
+
+            
+            # new_dataframe = 
+
+
+            def plot():
+                fig, ax = plt.subplots(3, 1, figsize=(10,6))
+
+            new_window = ctk.CTkToplevel(app)
+            new_window.title("PLOT")
+        
+        compare_button = ctk.CTkButton(secondStation_frame, text="Compare", command=comparing_window)
         compare_button.pack(side=ctk.TOP)
+
+        
+
 
 
         canvas_plot = FigureCanvasTkAgg(fig, master=new_window)

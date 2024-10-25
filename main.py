@@ -11,10 +11,14 @@ from frames import minmax_frame, sliders_frame, selected_time
 from plotCreator import create_plot, defining_data
 from sliderEvent import year_slider_event, hour_slider_event, time_updater
 from timeLabelClearing import timeLabelClearing
-
+from solutionGenerator import solution_generator
 
 data_dict = defining_data()
 color_index = 0
+
+
+
+
 
 def date_uploadig():
     if tabview.get() == "Start" and end_year_entry.get() == str(time[0]).split()[0]:
@@ -45,7 +49,7 @@ def loading_animation():
 
 
 def create_plot_handler(): 
-    create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, data, selected_data, selected_station, station_list, app)
+    create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, data, selected_data, selected_station_solution, station_list, filepaths, app)
 
 def read_time():
     global data, selected_data, filepath, loading_check, time, time_dif
@@ -99,12 +103,15 @@ def read_time_in_thread(event):
     threading.Thread(target=read_time).start()
 
 def read_data(event):
-    global data_dict, loading_check, filepaths_cut, selected_station
+    global data_dict, loading_check, filepaths_cut, selected_station_solution
 
     show_plot_button.configure(state="disabled")
 
-    selected_station = station_menu.get()
-    filepaths_cut = [filepath for filepath in filepaths if selected_station in filepath]
+    selected_station_solution = station_menu.get()
+    selected_station = selected_station_solution.split(" ")[0]
+    selected_solution = solution_generator(selected_station_solution.split("(")[1].split(")")[0])
+
+    filepaths_cut = [filepath for filepath in filepaths if selected_station in filepath and selected_solution in filepath]
 
     various_data = []
     for filepath in filepaths_cut:
@@ -153,19 +160,27 @@ def read_station():
     
     def station_finder(filepaths):
         station_list = []
-        try:
-            for i in range(len(filepaths)):
-                filepath = filepaths[i]
-                slash_id = filepath.rfind("/")
-                reduced_filepath = filepath[slash_id+1:]
-                _id = reduced_filepath.find("_")
-                station = reduced_filepath[:_id]
-                
-                if station not in station_list:
-                    station_list.append(station)
+        # try:
+        for i in range(len(filepaths)):
+            filepath = filepaths[i]
+            slash_id = filepath.rfind("/")
+            reduced_filepath = filepath[slash_id+1:]
+            _id = reduced_filepath.find("_")
+            station = reduced_filepath[:_id]
+            from re import search
+            find_solution = search(r'_(\d{6})_', filepaths[i])
+            # print(find_solution)
+            if find_solution:
+                result = find_solution.group(1)
+                station += f" ({solution_generator(result)})"
+                # print(solution_generator(result))
+                # print(station_list)
+                # print(station)
+            if station not in station_list:
+                station_list.append(station)
 
-        except: #messagebox "wrong file name"
-            messagebox.showinfo("WRONG FILE NAME")
+        # except: #messagebox "wrong file name"
+        #     messagebox.showinfo("WRONG FILE NAME")
 
         show_plot_button.configure(state="disabled")
         return(station_list)
@@ -310,5 +325,8 @@ selected_end_label_year, selected_end_label_hour = selected_time(left_section, "
 time_label_list = [min_label_value, max_label_value, selected_start_label_year, selected_start_label_hour, selected_end_label_year, 
                 selected_end_label_hour, start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, start_year_slider, 
                 start_hour_slider, end_year_slider, end_hour_slider]
+
+#------------comparing--------
+
 
 app.mainloop() 
