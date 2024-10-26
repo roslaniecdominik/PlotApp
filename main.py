@@ -160,27 +160,25 @@ def read_station():
     
     def station_finder(filepaths):
         station_list = []
-        # try:
-        for i in range(len(filepaths)):
-            filepath = filepaths[i]
-            slash_id = filepath.rfind("/")
-            reduced_filepath = filepath[slash_id+1:]
-            _id = reduced_filepath.find("_")
-            station = reduced_filepath[:_id]
-            from re import search
-            find_solution = search(r'_(\d{6})_', filepaths[i])
-            # print(find_solution)
-            if find_solution:
-                result = find_solution.group(1)
-                station += f" ({solution_generator(result)})"
-                # print(solution_generator(result))
-                # print(station_list)
-                # print(station)
-            if station not in station_list:
-                station_list.append(station)
+        try:
+            for i in range(len(filepaths)):
+                filepath = filepaths[i]
+                slash_id = filepath.rfind("/")
+                reduced_filepath = filepath[slash_id+1:]
+                _id = reduced_filepath.find("_")
+                station = reduced_filepath[:_id]
+                from re import search
+                find_solution = search(r'_(\d{6})_', filepaths[i])
 
-        # except: #messagebox "wrong file name"
-        #     messagebox.showinfo("WRONG FILE NAME")
+                if find_solution:
+                    result = find_solution.group(1)
+                    station += f" ({solution_generator(result)})"
+
+                if station not in station_list:
+                    station_list.append(station)
+
+        except: #messagebox "wrong file name"
+            messagebox.showinfo("WRONG FILE NAME")
 
         show_plot_button.configure(state="disabled")
         return(station_list)
