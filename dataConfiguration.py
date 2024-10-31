@@ -39,10 +39,7 @@ def time_column(data):
 def merge_data(data, selected_data, filepath):
     data_listname, x = match_data(selected_data)
 
-    # print(data, "\n", selected_data, "\n", filepath)
-        #dataframe z first pliku
-        # wybrany rodzaj danych
-        # liczba plików z tej stacji z tymi danymi
+
     if len(filepath) > 2:
         data_to_merge = data
         data_listname.append("datetime")
