@@ -44,7 +44,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         cut_data.loc[:, "Sol"] = solution_generator(selected_station.split("(")[1].split(")")[0])
         time_diff = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") - datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
 
-        if (time_diff > timedelta(days=365*2)): # individual function
+        if (time_diff > timedelta(days=365*2)):
             xaxis_set = "%y"
             xaxis_label = "TIME [year]"
         elif (time_diff <= timedelta(days=365*2)) and (time_diff > timedelta(days=6*31)):
@@ -204,129 +204,138 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
             data2 = pd.read_csv(filepath[0], sep=';', index_col=False, skipinitialspace=True) #może gdzieś tu usunąć niepotrzebne kolumny
             data2 = time_column(data2)
             data2 = merge_data(data2, selected_data, filepath)
-
             cut_data2 = data2[cut_column]
-            cut_data2.loc[:, "Sol"] = solution_generator(selected_station_solution2.split("(")[1].split(")")[0])
-            cut_data_merged = pd.concat([cut_data, cut_data2])
-            time_data = cut_data_merged.loc[(cut_data_merged['datetime'] >= start_time) & (cut_data_merged['datetime'] <= end_time)]
-
+            cut_data2.loc[:, "Sol"] = selected_solution2
             solutions = [solution_generator(selected_station.split("(")[1].split(")")[0]), solution_generator(selected_station_solution2.split("(")[1].split(")")[0])]
+            # print(cut_data2)
+            has_common_times = not set(cut_data['datetime']).isdisjoint(cut_data2['datetime'])
+            
+            if has_common_times:
 
-            colors2 = ["dodgerblue", "pink", "orange"]
+                #Empty cell
+                all_times = pd.DataFrame({'datetime': pd.concat([cut_data['datetime'], cut_data2['datetime']]).unique()})
+                cut_data1_full = pd.merge(all_times, cut_data, on='datetime', how='left').assign(Sol=solutions[0])
+                cut_data2_full = pd.merge(all_times, cut_data2, on='datetime', how='left').assign(Sol=solutions[1])
 
-            def solution_dataframe(time_data, data_listname, solutions):
-                sol_df = time_data[time_data["Sol"] == solutions[0]].reset_index(drop=True)
+                cut_data_merged = pd.concat([cut_data1_full, cut_data2_full], ignore_index=True).sort_values(by='datetime').reset_index(drop=True)
+                time_data = cut_data_merged.loc[(cut_data_merged['datetime'] >= start_time) & (cut_data_merged['datetime'] <= end_time)]
 
-                for layer_name in data_listname:
-                    cords1 = time_data.loc[time_data["Sol"] == solutions[0], layer_name]
-                    cords2 = time_data.loc[time_data["Sol"] == solutions[1], layer_name]
-                    sol_df[layer_name] = cords1 - cords2
+                colors2 = ["dodgerblue", "pink", "orange"]
 
-                return sol_df
+                def solution_dataframe(time_data, data_listname, solutions):
+                    sol_df = time_data[time_data["Sol"] == solutions[0]].reset_index(drop=True)
 
-            def plot():
-                fig, ax = plt.subplots(3, 2, figsize=(12,5))
-                plot_objects = []
+                    for layer_name in data_listname:
+                        cords1 = time_data.loc[time_data["Sol"] == solutions[0], layer_name].reset_index(drop=True)
+                        cords2 = time_data.loc[time_data["Sol"] == solutions[1], layer_name].reset_index(drop=True)
+                        sol_df[layer_name] = cords1 - cords2
+                        
+                    return sol_df
 
-                sol_df = solution_dataframe(time_data, data_listname, solutions)
+                def plot():
+                    fig, ax = plt.subplots(3, 2, figsize=(12,5))
+                    plot_objects = []
+
+                    sol_df = solution_dataframe(time_data, data_listname, solutions)
+
+                    
+
+                    for i, layer_name in enumerate(data_listname):
+                        cord_time = time_data.loc[time_data["Sol"] == solutions[0], "datetime"]
+                        cord1 = time_data.loc[time_data["Sol"] == solutions[0], layer_name].reset_index(drop=True)
+                        cord2 = time_data.loc[time_data["Sol"] == solutions[1], layer_name].reset_index(drop=True)
+                        
+                        line, = ax[i, 0].plot(cord_time, cord2, color=data_colors[i])
+                        line, = ax[i, 0].plot(cord_time, cord1, color=colors2[i])
+                        line, = ax[i, 1].plot(cord_time, sol_df[layer_name], color=data_colors[i])
+                        ax[i, 0].set_title(layer_name)
+                        ax[i, 0].xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
+                        ax[i, 0].grid(True)
+
+                        ax[i, 0].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+                        ax[i, 0].ticklabel_format(useOffset=False, axis='y', style='plain')
+
+                        ax[i, 1].set_title(layer_name)
+                        ax[i, 1].xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
+                        ax[i, 1].grid(True)
+
+                        ax[i, 1].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+                        ax[i, 1].ticklabel_format(useOffset=False, axis='y', style='plain')
+
+                    extend_time = f"{datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")}  -  {datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")}"
+                    ax[0,0].text(-0.2, 1.4, f"{selected_station}, {extend_time}", transform=ax[0,0].transAxes, va='top', ha='left', fontsize=11)
+                    ax[0,0].text(-0.1, 1.2, '{:>13}'.format('[m]'), transform=ax[0,0].transAxes, va='top', ha='left', fontsize=10)
+                    ax[-1,0].set_xlabel(xaxis_label, font="Verdana")
+
+
+                    return plot_objects, fig, ax
+                
+                def layer_buttons(ax):
+
+                    layer_list = [selected_station, selected_station_solution2, "Difference"]
+
+                    layer_dict = {
+                        selected_station: 0,
+                        selected_station_solution2: 0,
+                        "Difference": 1
+                    }
+
+                    i = -1
+                    for key in layer_dict:
+                        
+                        i += 1
+                        if i == len(layer_dict)-1:
+                            i = 0
+
+                        layer_label = ctk.CTkLabel(layers_frame2, text=key)
+                        layer_label.pack()
+
+                        for j, layer_name in enumerate(ax):
+
+                            layer_frame = ctk.CTkFrame(layers_frame2)
+                            layer_frame.pack(anchor="w", padx=10, pady=5)
+
+                            toggle_button = ctk.CTkCheckBox(layer_frame, text=data_listname[j], command=lambda line=ax[j, layer_dict[key]].get_lines()[i]: toggle_visibility(line))
+                            toggle_button.grid(row=0, column=0)
+                            toggle_button.select()
+                            if key == layer_list[0] or key == layer_list[2]:
+                                buttons_line = ctk.CTkFrame(layer_frame, width=50, height=5, fg_color=data_colors[j])
+                            elif key == layer_list[1]:
+                                buttons_line = ctk.CTkFrame(layer_frame, width=50, height=5, fg_color=colors2[j])
+                            
+                            buttons_line.grid(row=0, column=2, padx=(0, 5))
 
                 
-
-                for i, layer_name in enumerate(data_listname):
-                    cord_time = time_data.loc[time_data["Sol"] == solutions[0], "datetime"]
-                    cord1 = time_data.loc[time_data["Sol"] == solutions[0], layer_name]
-                    cord2 = time_data.loc[time_data["Sol"] == solutions[1], layer_name]
-                    
-                    line, = ax[i, 0].plot(cord_time, cord2, color=data_colors[i])
-                    line, = ax[i, 0].plot(cord_time, cord1, color=colors2[i])
-                    line, = ax[i, 1].plot(cord_time, sol_df[layer_name], color=data_colors[i])
-                    ax[i, 0].set_title(layer_name)
-                    ax[i, 0].xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
-                    ax[i, 0].grid(True)
-
-                    ax[i, 0].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
-                    ax[i, 0].ticklabel_format(useOffset=False, axis='y', style='plain')
-
-                    ax[i, 1].set_title(layer_name)
-                    ax[i, 1].xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
-                    ax[i, 1].grid(True)
-
-                    ax[i, 1].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
-                    ax[i, 1].ticklabel_format(useOffset=False, axis='y', style='plain')
-
-                extend_time = f"{datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")}  -  {datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")}"
-                ax[0,0].text(-0.2, 1.4, f"{selected_station}, {extend_time}", transform=ax[0,0].transAxes, va='top', ha='left', fontsize=11)
-                ax[0,0].text(-0.1, 1.2, '{:>13}'.format('[m]'), transform=ax[0,0].transAxes, va='top', ha='left', fontsize=10)
-                ax[-1,0].set_xlabel(xaxis_label, font="Verdana")
-
-
-                return plot_objects, fig, ax
+                plot_objects, fig, ax = plot()
             
-            def layer_buttons(ax):
+                fig.subplots_adjust(hspace=0.4, wspace=0.3)
 
-                layer_list = [selected_station, selected_station_solution2, "Difference"]
+                new_window2 = ctk.CTkToplevel(app)
+                new_window2.title("PLOT")
 
-                layer_dict = {
-                    selected_station: 0,
-                    selected_station_solution2: 0,
-                    "Difference": 1
-                }
+                center_window(new_window2, 1200, 650)
 
-                i = -1
-                for key in layer_dict:
-                    
-                    i += 1
-                    if i == len(layer_dict)-1:
-                        i = 0
+                right_frame2 = ctk.CTkFrame(new_window2,)
+                right_frame2.pack(side=ctk.RIGHT, fill=ctk.Y)
 
-                    layer_label = ctk.CTkLabel(layers_frame2, text=key)
-                    layer_label.pack()
+                
+                layers_frame2 = ctk.CTkFrame(right_frame2)
+                layers_frame2.pack(side=ctk.TOP, fill=ctk.Y)
 
-                    for j, layer_name in enumerate(ax):
+                layers_label = ctk.CTkLabel(layers_frame, text="Layers", font=("Helvetica", 22))
+                layers_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 50))
 
-                        layer_frame = ctk.CTkFrame(layers_frame2)
-                        layer_frame.pack(anchor="w", padx=10, pady=5)
+                layer_buttons(ax)
 
-                        toggle_button = ctk.CTkCheckBox(layer_frame, text=data_listname[j], command=lambda line=ax[j, layer_dict[key]].get_lines()[i]: toggle_visibility(line))
-                        toggle_button.grid(row=0, column=0)
-                        toggle_button.select()
-                        if key == layer_list[0] or key == layer_list[2]:
-                            buttons_line = ctk.CTkFrame(layer_frame, width=50, height=5, fg_color=data_colors[j])
-                        elif key == layer_list[1]:
-                            buttons_line = ctk.CTkFrame(layer_frame, width=50, height=5, fg_color=colors2[j])
-                        
-                        buttons_line.grid(row=0, column=2, padx=(0, 5))
-
+                canvas_plot = FigureCanvasTkAgg(fig, master=new_window2)
+                canvas_plot.get_tk_widget().pack(fill=ctk.BOTH, expand=True)
             
-            plot_objects, fig, ax = plot()
-        
-            fig.subplots_adjust(hspace=0.4, wspace=0.3)
+                
+                toolbar = NavigationToolbar2Tk(canvas_plot, new_window2)
+                toolbar.update()
+            else:
+                messagebox.showinfo("The second station doesn't have common time")
 
-            new_window2 = ctk.CTkToplevel(app)
-            new_window2.title("PLOT")
-
-            center_window(new_window2, 1200, 650)
-
-            right_frame2 = ctk.CTkFrame(new_window2,)
-            right_frame2.pack(side=ctk.RIGHT, fill=ctk.Y)
-
-            
-            layers_frame2 = ctk.CTkFrame(right_frame2)
-            layers_frame2.pack(side=ctk.TOP, fill=ctk.Y)
-
-            layers_label = ctk.CTkLabel(layers_frame, text="Layers", font=("Helvetica", 22))
-            layers_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 50))
-
-            layer_buttons(ax)
-
-            canvas_plot = FigureCanvasTkAgg(fig, master=new_window2)
-            canvas_plot.get_tk_widget().pack(fill=ctk.BOTH, expand=True)
-        
-            
-            toolbar = NavigationToolbar2Tk(canvas_plot, new_window2)
-            toolbar.update()
-
-        
         compare_button = ctk.CTkButton(secondStation_frame, text="Compare", command=comparing_window)
         compare_button.pack(side=ctk.TOP)
 
