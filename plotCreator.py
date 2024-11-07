@@ -41,7 +41,9 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         cut_column.insert(0, "Stat")
         cut_column.insert(0, "datetime")
         cut_data = time_data[cut_column]
+        cut_data = cut_data.copy()
         cut_data.loc[:, "Sol"] = solution_generator(selected_station.split("(")[1].split(")")[0])
+
         time_diff = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") - datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
 
         if (time_diff > timedelta(days=365*2)):
@@ -205,30 +207,43 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
             data2 = time_column(data2)
             data2 = merge_data(data2, selected_data, filepath)
             cut_data2 = data2[cut_column]
+            cut_data2 = cut_data2.copy()
             cut_data2.loc[:, "Sol"] = selected_solution2
             solutions = [solution_generator(selected_station.split("(")[1].split(")")[0]), solution_generator(selected_station_solution2.split("(")[1].split(")")[0])]
-            # print(cut_data2)
             has_common_times = not set(cut_data['datetime']).isdisjoint(cut_data2['datetime'])
             
             if has_common_times:
 
                 #Empty cell
                 all_times = pd.DataFrame({'datetime': pd.concat([cut_data['datetime'], cut_data2['datetime']]).unique()})
-                cut_data1_full = pd.merge(all_times, cut_data, on='datetime', how='left').assign(Sol=solutions[0])
-                cut_data2_full = pd.merge(all_times, cut_data2, on='datetime', how='left').assign(Sol=solutions[1])
+
+                if cut_data["Sol"].iloc[0] == cut_data2["Sol"].iloc[0]:
+                    cut_data1_full = pd.merge(all_times, cut_data, on='datetime', how='left').assign(Stat=selected_station)
+                    cut_data2_full = pd.merge(all_times, cut_data2, on='datetime', how='left').assign(Stat=selected_station_solution2)
+                else:
+                    cut_data1_full = pd.merge(all_times, cut_data, on='datetime', how='left').assign(Sol=solutions[0])
+                    cut_data2_full = pd.merge(all_times, cut_data2, on='datetime', how='left').assign(Sol=solutions[1])
 
                 cut_data_merged = pd.concat([cut_data1_full, cut_data2_full], ignore_index=True).sort_values(by='datetime').reset_index(drop=True)
                 time_data = cut_data_merged.loc[(cut_data_merged['datetime'] >= start_time) & (cut_data_merged['datetime'] <= end_time)]
-
+                time_data = time_data.copy()
                 colors2 = ["dodgerblue", "pink", "orange"]
 
                 def solution_dataframe(time_data, data_listname, solutions):
                     sol_df = time_data[time_data["Sol"] == solutions[0]].reset_index(drop=True)
 
-                    for layer_name in data_listname:
-                        cords1 = time_data.loc[time_data["Sol"] == solutions[0], layer_name].reset_index(drop=True)
-                        cords2 = time_data.loc[time_data["Sol"] == solutions[1], layer_name].reset_index(drop=True)
-                        sol_df[layer_name] = cords1 - cords2
+                    if cut_data["Sol"].iloc[0] == cut_data2["Sol"].iloc[0]:
+                        
+                        for layer_name in data_listname:
+                            cords1 = time_data.loc[time_data["Stat"] == selected_station, layer_name].reset_index(drop=True)
+                            cords2 = time_data.loc[time_data["Stat"] == selected_station_solution2, layer_name].reset_index(drop=True)
+                            sol_df[layer_name] = cords1 - cords2
+                            
+                    else:
+                        for layer_name in data_listname:
+                            cords1 = time_data.loc[time_data["Sol"] == solutions[0], layer_name].reset_index(drop=True)
+                            cords2 = time_data.loc[time_data["Sol"] == solutions[1], layer_name].reset_index(drop=True)
+                            sol_df[layer_name] = cords1 - cords2
                         
                     return sol_df
 
@@ -236,14 +251,20 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                     fig, ax = plt.subplots(3, 2, figsize=(12,5))
                     plot_objects = []
 
-                    sol_df = solution_dataframe(time_data, data_listname, solutions)
-
-                    
-
                     for i, layer_name in enumerate(data_listname):
-                        cord_time = time_data.loc[time_data["Sol"] == solutions[0], "datetime"]
-                        cord1 = time_data.loc[time_data["Sol"] == solutions[0], layer_name].reset_index(drop=True)
-                        cord2 = time_data.loc[time_data["Sol"] == solutions[1], layer_name].reset_index(drop=True)
+                        
+                        if cut_data["Sol"].iloc[0] == cut_data2["Sol"].iloc[0]:
+                            sol_df = solution_dataframe(time_data, data_listname, station_list).reset_index(drop=True)
+                            cord_time = time_data.loc[time_data["Stat"] == selected_station, "datetime"].reset_index(drop=True)
+                            cord1 = time_data.loc[time_data["Stat"] == selected_station, layer_name].reset_index(drop=True)
+                            cord2 = time_data.loc[time_data["Stat"] == selected_station_solution2, layer_name].reset_index(drop=True)
+
+                        else:
+                            sol_df = solution_dataframe(time_data, data_listname, solutions).reset_index(drop=True)
+                            cord_time = time_data.loc[time_data["Sol"] == solutions[0], "datetime"].reset_index(drop=True)
+                            cord1 = time_data.loc[time_data["Sol"] == solutions[0], layer_name].reset_index(drop=True)
+                            cord2 = time_data.loc[time_data["Sol"] == solutions[1], layer_name].reset_index(drop=True)
+
                         
                         line, = ax[i, 0].plot(cord_time, cord2, color=data_colors[i])
                         line, = ax[i, 0].plot(cord_time, cord1, color=colors2[i])
