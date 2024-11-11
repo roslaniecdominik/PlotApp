@@ -107,7 +107,7 @@ def read_data(event):
 
     show_plot_button.configure(state="disabled")
 
-    selected_station_solution = station_menu.get()
+    selected_station_solution = station_menu_fullVAR.get()
     selected_station = selected_station_solution.split(" ")[0]
     selected_solution = solution_generator(selected_station_solution.split("(")[1].split(")")[0])
 
@@ -139,8 +139,18 @@ def read_data(event):
     timeLabelClearing(*time_label_list)
     buttonState([data_menu])
 
+
 def read_data_in_thread(event):
     global loading_check
+
+    def shorten_label(text, max_length=14):
+        if len(text) > max_length:
+            return text[:max_length] + "..."
+        return text
+
+    station_fullLabel.configure(text=event) 
+    station_menu_fullVAR.set(event)
+    station_menu.set(shorten_label(event))
 
     loading_check = True
     app.after(500, loading_animation)
@@ -216,7 +226,7 @@ ctk.set_default_color_theme("blue")  # Themes: blue (default), dark-blue, green
 app = ctk.CTk()
 app.title("PlotApp")
 
-center_window(app, 675, 475)
+center_window(app, 700, 500)
 
 # -File section-
 file_section = ctk.CTkFrame(app, fg_color="transparent")
@@ -227,8 +237,12 @@ filename_entry = ctk.CTkEntry(file_section, border_width=0)
 filename_entry.pack(side=ctk.RIGHT, fill=ctk.BOTH, padx=(10,0), expand=True)
 
 # -Station & data section-
+station_fullLabel = ctk.CTkLabel(app, text=" ", font=("Helvetica", 12))
+station_fullLabel.pack(side=ctk.TOP)
+
+
 StationData_section = ctk.CTkFrame(app, border_width=0, corner_radius=10, fg_color="transparent")
-StationData_section.pack(side=ctk.TOP, fill=ctk.X, padx=55, pady=20)
+StationData_section.pack(side=ctk.TOP, fill=ctk.X, padx=55, pady=(10,20))
 
 station_section = ctk.CTkFrame(StationData_section, border_width=0, corner_radius=10, fg_color="transparent")
 station_section.pack(side=ctk.LEFT, fill=ctk.X)
@@ -237,7 +251,7 @@ station_label = ctk.CTkLabel(station_section, text="Select station", font=("Helv
 station_label.pack(side=ctk.LEFT, padx=(0,10))
 
 
-
+station_menu_fullVAR = ctk.StringVar(station_section)
 station_menu_variable = ctk.StringVar(value="...")
 station_menu = ctk.CTkOptionMenu(station_section, width=150, values=[], variable=station_menu_variable, state="disabled", command=read_data_in_thread)
 station_menu.pack(side=ctk.RIGHT,)
@@ -315,6 +329,7 @@ show_plot_button.pack(side=ctk.RIGHT)
 
 left_section = ctk.CTkFrame(lowest_section, fg_color="transparent")
 left_section.pack(side=ctk.LEFT, fill=ctk.X)
+
 
 selected_start_label_year, selected_start_label_hour = selected_time(left_section, "Start: ")
 

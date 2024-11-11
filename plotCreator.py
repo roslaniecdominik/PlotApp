@@ -134,12 +134,12 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
 
             def layer_buttons(ax):
                 for i, ax in enumerate(ax):
-                    layer_frame = ctk.CTkFrame(layers_frame)
+                    layer_frame = ctk.CTkFrame(layers_frame, fg_color="#404040")
                     layer_frame.pack(anchor="w", padx=10, pady=5)
 
                     # Buttons
                     toggle_button = ctk.CTkCheckBox(layer_frame, text=data_listname[i], command=lambda line=ax.get_lines()[0]: toggle_visibility(line))
-                    toggle_button.grid(row=0, column=0)
+                    toggle_button.grid(row=0, column=0, padx=2, pady=2)
                     toggle_button.select()
 
                     # Buttons line
@@ -156,11 +156,19 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
 
         center_window(new_window, 1200, 650)
 
-        right_frame = ctk.CTkFrame(new_window,)
+        def stop():
+            new_window.attributes("-topmost", False)
+        
+        new_window.attributes("-topmost", True)
+        new_window.after(500, stop)
+
+        
+
+        right_frame = ctk.CTkFrame(new_window, fg_color="#333333")
         right_frame.pack(side=ctk.RIGHT, fill=ctk.Y)
 
         
-        layers_frame = ctk.CTkFrame(right_frame)
+        layers_frame = ctk.CTkFrame(right_frame, fg_color="transparent")
         layers_frame.pack(side=ctk.TOP, fill=ctk.Y)
 
         layers_label = ctk.CTkLabel(layers_frame, text="Layers", font=("Helvetica", 22))
@@ -175,19 +183,32 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
             station2_list.remove(selected_station)
 
 
-        secondStation_frame = ctk.CTkFrame(right_frame)
+        secondStation_frame = ctk.CTkFrame(right_frame, fg_color="transparent")
         secondStation_frame.pack(side=ctk.TOP, fill=ctk.X)
 
         secondStation_label = ctk.CTkLabel(secondStation_frame, text="Compare data \nwith second station", font=("Helvetica", 16))
         secondStation_label.pack(side=ctk.TOP, fill=ctk.X, pady=(50, 20))
 
+        error_label = ctk.CTkTextbox(right_frame, font=("Helvetica", 14), text_color="red", wrap="word", fg_color="transparent", cursor="arrow")
+        error_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 50))
+        error_label.configure(state="disabled")
+        
+        def station2_fun(event):
+            def shorten_label(text, max_length=14):
+                if len(text) > max_length:
+                    return text[:max_length] + "..."
+                return text
+            station2_menu_fullVar.set(event)
+            station2_menu.set(shorten_label(event)) 
+
+        station2_menu_fullVar = ctk.StringVar(secondStation_frame)
         station2_menu_variable = ctk.StringVar(value="Select station ...")
-        station2_menu = ctk.CTkOptionMenu(secondStation_frame, width=150, values=[], variable=station2_menu_variable)#, command=read_data_in_thread)
+        station2_menu = ctk.CTkOptionMenu(secondStation_frame, width=150, values=[], variable=station2_menu_variable, command=station2_fun)
         station2_menu.pack(side=ctk.TOP, pady=(0, 20))
         station2_menu.configure(values=station2_list)
 
         def comparing_window():
-            selected_station_solution2 = station2_menu.get()
+            selected_station_solution2 = station2_menu_fullVar.get()
             selected_station2 = selected_station_solution2.split(" ")[0]
             selected_solution2 = solution_generator(selected_station_solution2.split("(")[1].split(")")[0])
 
@@ -213,7 +234,8 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
             has_common_times = not set(cut_data['datetime']).isdisjoint(cut_data2['datetime'])
             
             if has_common_times:
-
+                error_label.delete("1.0", "end")
+                error_label.see("end")
                 #Empty cell
                 all_times = pd.DataFrame({'datetime': pd.concat([cut_data['datetime'], cut_data2['datetime']]).unique()})
 
@@ -309,16 +331,17 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                             i = 0
 
                         layer_label = ctk.CTkLabel(layers_frame2, text=key)
-                        layer_label.pack()
+                        layer_label.pack(padx=10, pady=(0,10))
 
                         for j, layer_name in enumerate(ax):
 
-                            layer_frame = ctk.CTkFrame(layers_frame2)
-                            layer_frame.pack(anchor="w", padx=10, pady=5)
+                            layer_frame = ctk.CTkFrame(layers_frame2, fg_color="#404040")
+                            layer_frame.pack(side=ctk.TOP, padx=10, pady=5)
 
                             toggle_button = ctk.CTkCheckBox(layer_frame, text=data_listname[j], command=lambda line=ax[j, layer_dict[key]].get_lines()[i]: toggle_visibility(line))
-                            toggle_button.grid(row=0, column=0)
+                            toggle_button.grid(row=0, column=0, padx=2, pady=2)
                             toggle_button.select()
+
                             if key == layer_list[0] or key == layer_list[2]:
                                 buttons_line = ctk.CTkFrame(layer_frame, width=50, height=5, fg_color=data_colors[j])
                             elif key == layer_list[1]:
@@ -335,19 +358,24 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 new_window2.title("PLOT")
 
                 center_window(new_window2, 1200, 650)
+                
+                def stop():
+                    new_window2.attributes("-topmost", False)
+                new_window2.attributes("-topmost", True)
+                new_window2.after(500, stop)
 
-                right_frame2 = ctk.CTkFrame(new_window2,)
+                right_frame2 = ctk.CTkFrame(new_window2, fg_color="#333333")
                 right_frame2.pack(side=ctk.RIGHT, fill=ctk.Y)
 
                 
-                layers_frame2 = ctk.CTkFrame(right_frame2)
+                layers_frame2 = ctk.CTkFrame(right_frame2, fg_color="transparent")
                 layers_frame2.pack(side=ctk.TOP, fill=ctk.Y)
 
-                layers_label = ctk.CTkLabel(layers_frame, text="Layers", font=("Helvetica", 22))
-                layers_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 50))
+                layers_label2 = ctk.CTkLabel(layers_frame2, text="Layers", font=("Helvetica", 22))
+                layers_label2.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 50))
 
+                
                 layer_buttons(ax)
-
                 canvas_plot = FigureCanvasTkAgg(fig, master=new_window2)
                 canvas_plot.get_tk_widget().pack(fill=ctk.BOTH, expand=True)
             
@@ -355,9 +383,18 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 toolbar = NavigationToolbar2Tk(canvas_plot, new_window2)
                 toolbar.update()
             else:
-                messagebox.showinfo("The second station doesn't have common time")
-
+                error_label.configure(state="normal")
+                text = "The second station doesn't have common time"
+                if (len(error_label.get("1.0", "end"))) == 1:
+                    error_label.insert("end", text)
+                    
+                error_label.configure(state="disabled")
+                
         compare_button = ctk.CTkButton(secondStation_frame, text="Compare", command=comparing_window)
+
+        if selected_data == "DOP factors":
+            compare_button.configure(state="disabled")
+            
         compare_button.pack(side=ctk.TOP)
 
         canvas_plot = FigureCanvasTkAgg(fig, master=new_window)
