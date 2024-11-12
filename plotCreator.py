@@ -7,6 +7,7 @@ from matplotlib.ticker import ScalarFormatter
 from centerWindow import center_window
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from solutionGenerator import solution_generator
+from layerButtons import layer_buttons
 
 def defining_data():
     global data_dict
@@ -19,14 +20,8 @@ def defining_data():
 single_plot = ["DOP factors", "ION"]
 triple_plot = ["REC XYZ", "RECm XYZ"]
 
-
-
 def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, data, selected_data, selected_station, station_list, filepaths, app):
     global loading_check
-
-    def toggle_visibility(name):
-        name.set_visible(not name.get_visible())
-        plt.draw()
 
     start_time = f"{start_year_entry.get()} {start_hour_entry.get()}"
     end_time = f"{end_year_entry.get()} {end_hour_entry.get()}"
@@ -46,30 +41,35 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
 
         time_diff = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") - datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
 
-        if (time_diff > timedelta(days=365*2)):
-            xaxis_set = "%y"
-            xaxis_label = "TIME [year]"
-        elif (time_diff <= timedelta(days=365*2)) and (time_diff > timedelta(days=6*31)):
-            xaxis_set = "%y-%m"
-            xaxis_label = "TIME [year-month]"
-        elif (time_diff <= timedelta(days=6*31)) and (time_diff > timedelta(days=2*31)):
-            xaxis_set = "%m-%d"
-            xaxis_label = "TIME [month-day]"
-        elif (time_diff <= timedelta(days=2*31)) and (time_diff > timedelta(days=31)):
-            xaxis_set = "%m-%d %H"
-            xaxis_label = "TIME [month-day hour]"
-        elif (time_diff <= timedelta(days=31)) and (time_diff > timedelta(days=1)):
-            xaxis_set = "%d %H:%M"
-            xaxis_label = "TIME [day hour:min]"
-        elif (time_diff <= timedelta(hours=24)) and (time_diff > timedelta(hours=1)):
-            xaxis_set = "%H:%M"
-            xaxis_label = "TIME [hour:min]"
-        elif time_diff < timedelta(minutes=60):
-            xaxis_set = "%M:%S"
-            xaxis_label = "TIME [min:sec]"
-        else:
-            xaxis_set = "%Y-%m-%d %H:%M"
-            xaxis_label = "TIME [year-month-day hour:min]"
+        def xaxis_config (time_diff): #to other file
+            if (time_diff > timedelta(days=365*2)):
+                xaxis_set = "%y"
+                xaxis_label = "TIME [year]"
+            elif (time_diff <= timedelta(days=365*2)) and (time_diff > timedelta(days=6*31)):
+                xaxis_set = "%y-%m"
+                xaxis_label = "TIME [year-month]"
+            elif (time_diff <= timedelta(days=6*31)) and (time_diff > timedelta(days=2*31)):
+                xaxis_set = "%m-%d"
+                xaxis_label = "TIME [month-day]"
+            elif (time_diff <= timedelta(days=2*31)) and (time_diff > timedelta(days=31)):
+                xaxis_set = "%m-%d %H"
+                xaxis_label = "TIME [month-day hour]"
+            elif (time_diff <= timedelta(days=31)) and (time_diff > timedelta(days=1)):
+                xaxis_set = "%d %H:%M"
+                xaxis_label = "TIME [day hour:min]"
+            elif (time_diff <= timedelta(hours=24)) and (time_diff > timedelta(hours=1)):
+                xaxis_set = "%H:%M"
+                xaxis_label = "TIME [hour:min]"
+            elif time_diff < timedelta(minutes=60):
+                xaxis_set = "%M:%S"
+                xaxis_label = "TIME [min:sec]"
+            else:
+                xaxis_set = "%Y-%m-%d %H:%M"
+                xaxis_label = "TIME [year-month-day hour:min]"
+            return xaxis_set, xaxis_label
+        
+        xaxis_set, xaxis_label = xaxis_config(time_diff)
+        
 
         if selected_data in single_plot:
 
@@ -94,20 +94,6 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 ax.text(-0.12, 1.10, f"{selected_station}, {extend_time}", transform=ax.transAxes, va='top', ha='left', fontsize=11)
 
                 return plot_objects, fig, ax
-            
-            def layer_buttons(ax):
-                for i, layer_name in enumerate(data_listname):
-                    layer_frame = ctk.CTkFrame(layers_frame)
-                    layer_frame.pack(anchor="w", padx=10, pady=5)
-
-                    # Buttons
-                    toggle_button = ctk.CTkCheckBox(layer_frame, text=layer_name, command=lambda idx=i: toggle_visibility(data_list[idx]))
-                    toggle_button.grid(row=0, column=0)
-                    toggle_button.select()
-
-                    # Buttons line
-                    buttons_line = ctk.CTkFrame(layer_frame, width=50, height=5, fg_color=data_colors[i])
-                    buttons_line.grid(row=0, column=1, padx=(5, 5))
 
         elif selected_data in triple_plot:
             def plot():
@@ -131,20 +117,6 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 fig.tight_layout()
                 plot_objects = []
                 return plot_objects, fig, ax
-
-            def layer_buttons(ax):
-                for i, ax in enumerate(ax):
-                    layer_frame = ctk.CTkFrame(layers_frame, fg_color="#404040")
-                    layer_frame.pack(anchor="w", padx=10, pady=5)
-
-                    # Buttons
-                    toggle_button = ctk.CTkCheckBox(layer_frame, text=data_listname[i], command=lambda line=ax.get_lines()[0]: toggle_visibility(line))
-                    toggle_button.grid(row=0, column=0, padx=2, pady=2)
-                    toggle_button.select()
-
-                    # Buttons line
-                    buttons_line = ctk.CTkFrame(layer_frame, width=50, height=5, fg_color=data_colors[i])
-                    buttons_line.grid(row=0, column=2, padx=(0, 5))
 
         data_listname, data_colors = match_data(selected_data)
 
@@ -174,7 +146,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         layers_label = ctk.CTkLabel(layers_frame, text="Layers", font=("Helvetica", 22))
         layers_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 50))
 
-        layer_buttons(ax)
+        layer_buttons(fig, ax, data_listname, layers_frame, data_colors)
 
         
 
@@ -224,7 +196,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                                 filepath.append(i)
             import pandas as pd
             from dataConfiguration import merge_data, time_column
-            data2 = pd.read_csv(filepath[0], sep=';', index_col=False, skipinitialspace=True) #może gdzieś tu usunąć niepotrzebne kolumny
+            data2 = pd.read_csv(filepath[0], sep=';', index_col=False, skipinitialspace=True)
             data2 = time_column(data2)
             data2 = merge_data(data2, selected_data, filepath)
             cut_data2 = data2[cut_column]
@@ -236,6 +208,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
             if has_common_times:
                 error_label.delete("1.0", "end")
                 error_label.see("end")
+                
                 #Empty cell
                 all_times = pd.DataFrame({'datetime': pd.concat([cut_data['datetime'], cut_data2['datetime']]).unique()})
 
@@ -314,6 +287,9 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                     return plot_objects, fig, ax
                 
                 def layer_buttons(ax):
+                    def toggle_visibility(name):
+                        name.set_visible(not name.get_visible())
+                        plt.draw()
 
                     layer_list = [selected_station, selected_station_solution2, "Difference"]
 

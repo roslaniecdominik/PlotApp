@@ -21,7 +21,7 @@ def sliders_frame(tab_text, date_text, tabview): #to
     entry.pack(side=ctk.LEFT, padx=10)
     return entry
 
-def selected_time (parent, text): #to
+def selected_time (parent, text):
     frame = ctk.CTkFrame(parent, fg_color="transparent")
     frame.pack(side=ctk.TOP, fill=ctk.X, expand=True)
 

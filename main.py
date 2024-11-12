@@ -16,10 +16,6 @@ from solutionGenerator import solution_generator
 data_dict = defining_data()
 color_index = 0
 
-
-
-
-
 def date_uploadig():
     if tabview.get() == "Start" and end_year_entry.get() == str(time[0]).split()[0]:
         start_year_entry.delete(0, ctk.END)
@@ -42,11 +38,7 @@ def loading_animation():
     else:
         circle1.configure(fg_color="transparent")
         circle2.configure(fg_color="transparent")
-        circle3.configure(fg_color="transparent")
-     
-
-#------------------------
-
+        circle3.configure(fg_color="transparent")     
 
 def create_plot_handler(): 
     create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, data, selected_data, selected_station_solution, station_list, filepaths, app)
@@ -138,7 +130,6 @@ def read_data(event):
 
     timeLabelClearing(*time_label_list)
     buttonState([data_menu])
-
 
 def read_data_in_thread(event):
     global loading_check
@@ -295,9 +286,6 @@ tabview.pack(side=ctk.TOP, fill=ctk.X, padx=100, pady=0)
 tabview.add("Start")
 tabview.add("End")
 
-time = [0]
-time_dif = 0
-y= 2
 start_year_entry = sliders_frame("Start", "year - month - day", tabview)
 start_year_slider = ctk.CTkSlider(tabview.tab("Start"), height=20, from_=0, to=10, number_of_steps=10, state="disabled", command=lambda value: year_slider_event("start", start_year_slider, start_year_entry, end_year_entry, time[0], selected_start_label_year, selected_end_label_year, time_dif))
 start_year_slider.pack(fill=ctk.X, pady=(5,15))
@@ -338,8 +326,5 @@ selected_end_label_year, selected_end_label_hour = selected_time(left_section, "
 time_label_list = [min_label_value, max_label_value, selected_start_label_year, selected_start_label_hour, selected_end_label_year, 
                 selected_end_label_hour, start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, start_year_slider, 
                 start_hour_slider, end_year_slider, end_hour_slider]
-
-#------------comparing--------
-
 
 app.mainloop() 
