@@ -33,8 +33,9 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         time_data = data.loc[(data['datetime'] >= start_time) & (data['datetime'] <= end_time)]
         data_listname, x = match_data(selected_data)
         cut_column = data_listname
-        cut_column.insert(0, "Stat")
+        # cut_column.insert(0, "Stat")
         cut_column.insert(0, "datetime")
+
         cut_data = time_data[cut_column]
         cut_data = cut_data.copy()
         cut_data.loc[:, "Sol"] = solution_generator(selected_station.split("(")[1].split(")")[0])

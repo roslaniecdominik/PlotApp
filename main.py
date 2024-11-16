@@ -3,6 +3,7 @@ from datetime import datetime
 from tkinter import filedialog, messagebox
 import threading
 import pandas as pd
+import time
 
 from buttonState import buttonState
 from centerWindow import center_window
@@ -27,6 +28,7 @@ def date_uploadig():
 def loading_animation():
     global color_index, loading_check
     colors = [("grey", "transparent", "transparent"), ("transparent", "grey", "transparent"), ("transparent", "transparent", "grey"), ("transparent", "grey", "transparent")]
+
     if loading_check:
         color_index = (color_index + 1) % len(colors)
         
@@ -38,13 +40,13 @@ def loading_animation():
     else:
         circle1.configure(fg_color="transparent")
         circle2.configure(fg_color="transparent")
-        circle3.configure(fg_color="transparent")     
+        circle3.configure(fg_color="transparent")
 
 def create_plot_handler(): 
     create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, data, selected_data, selected_station_solution, station_list, filepaths, app)
 
 def read_time():
-    global data, selected_data, filepath, loading_check, time, time_dif
+    global data, selected_data, filepath, loading_check, time_range, time_dif
 
     show_plot_button.configure(state="disabled")
 
@@ -61,23 +63,24 @@ def read_time():
 
     data = pd.read_csv(filepath[0], sep=';', index_col=False, skipinitialspace=True)
     data = time_column(data)
-
+ 
     data = merge_data(data, selected_data, filepath)
 
     
-    time = [datetime.strptime(str(min(data["datetime"])), "%Y-%m-%d %H:%M:%S"), datetime.strptime(str(max(data["datetime"])), "%Y-%m-%d %H:%M:%S")]
-    time_dif = int((time[-1] - time[0]).days)
+    time_range = [datetime.strptime(str(min(data["datetime"])), "%Y-%m-%d %H:%M:%S"), datetime.strptime(str(max(data["datetime"])), "%Y-%m-%d %H:%M:%S")]
+
+    time_dif = int((time_range[-1] - time_range[0]).days)
 
     min_label_value.configure(text=min(data["datetime"]))
     max_label_value.configure(text=max(data["datetime"]))
     
 
-    time_updater (time[0], start_year_entry, start_hour_entry, start_year_slider, selected_start_label_year,  selected_start_label_hour, time_dif)
-    start_minute = (datetime.strptime(time[0].strftime("%H:%M:%S"), "%H:%M:%S")).minute * 2
+    time_updater (time_range[0], start_year_entry, start_hour_entry, start_year_slider, selected_start_label_year,  selected_start_label_hour, time_dif)
+    start_minute = (datetime.strptime(time_range[0].strftime("%H:%M:%S"), "%H:%M:%S")).minute * 2
     start_hour_slider.configure(from_= start_minute, to=24*60*2-1, number_of_steps=24*60*2-1 - start_minute)
 
-    time_updater (time[-1], end_year_entry, end_hour_entry, end_year_slider, selected_end_label_year, selected_end_label_hour, time_dif)
-    end_minute = (datetime.strptime(time[-1].strftime("%H:%M:%S"), "%H:%M:%S")).minute * 2
+    time_updater (time_range[-1], end_year_entry, end_hour_entry, end_year_slider, selected_end_label_year, selected_end_label_hour, time_dif)
+    end_minute = (datetime.strptime(time_range[-1].strftime("%H:%M:%S"), "%H:%M:%S")).minute * 2
     end_hour_slider.configure(from_=0, to=24*60*2-1-end_minute, number_of_steps=24*60*2-1 - end_minute)
 
     loading_check = False
@@ -178,14 +181,12 @@ def read_station():
                 if station not in station_list:
                     station_list.append(station)
 
-        except: #messagebox "wrong file name"
+        except:
             messagebox.showinfo("WRONG FILE NAME")
 
         show_plot_button.configure(state="disabled")
         return(station_list)
     
-    loading_check = False
-    loading_animation()
 
     if filepaths != "":
         station_list = station_finder(filepaths)
@@ -199,12 +200,15 @@ def read_station():
 
     buttonState([station_menu])
 
+    loading_check = False
+    loading_animation()
+
+
 def open_file():
     global filepaths, loading_check
     filepaths = filedialog.askopenfilenames(filetypes=[("Text files", "*.log")])
     loading_check = True
-    app.after(500, loading_animation)
-
+    loading_animation()
     loading_station = threading.Thread(target=read_station)
     loading_station.start()
     show_plot_button.configure(state="disabled")
@@ -287,20 +291,20 @@ tabview.add("Start")
 tabview.add("End")
 
 start_year_entry = sliders_frame("Start", "year - month - day", tabview)
-start_year_slider = ctk.CTkSlider(tabview.tab("Start"), height=20, from_=0, to=10, number_of_steps=10, state="disabled", command=lambda value: year_slider_event("start", start_year_slider, start_year_entry, end_year_entry, time[0], selected_start_label_year, selected_end_label_year, time_dif))
+start_year_slider = ctk.CTkSlider(tabview.tab("Start"), height=20, from_=0, to=10, number_of_steps=10, state="disabled", command=lambda value: year_slider_event("start", start_year_slider, start_year_entry, end_year_entry, time_range[0], selected_start_label_year, selected_end_label_year, time_dif))
 start_year_slider.pack(fill=ctk.X, pady=(5,15))
 
 
 start_hour_entry = sliders_frame("Start", "hour : minute : second", tabview)
-start_hour_slider = ctk.CTkSlider(tabview.tab("Start"), height=20, from_=0, to=24*60*2-1, number_of_steps=24*60*2-1, state="disabled", command=lambda value: hour_slider_event("start", str(time[0]).split(" ")[1], time[0].strftime("%Y-%m-%d"), start_year_entry, end_year_entry, start_hour_entry, end_hour_entry, start_hour_slider, selected_start_label_hour, selected_end_label_hour))
+start_hour_slider = ctk.CTkSlider(tabview.tab("Start"), height=20, from_=0, to=24*60*2-1, number_of_steps=24*60*2-1, state="disabled", command=lambda value: hour_slider_event("start", str(time_range[0]).split(" ")[1], time_range[0].strftime("%Y-%m-%d"), start_year_entry, end_year_entry, start_hour_entry, end_hour_entry, start_hour_slider, selected_start_label_hour, selected_end_label_hour))
 start_hour_slider.pack(fill=ctk.X, pady=(5,0))
 
 end_year_entry = sliders_frame("End", "year - month - day", tabview)
-end_year_slider = ctk.CTkSlider(tabview.tab("End"), height=20, from_=0, to=10, number_of_steps=10, state="disabled", command=lambda value: year_slider_event("end", end_year_slider, end_year_entry, start_year_entry, time[-1], selected_start_label_year, selected_end_label_year, time_dif))
+end_year_slider = ctk.CTkSlider(tabview.tab("End"), height=20, from_=0, to=10, number_of_steps=10, state="disabled", command=lambda value: year_slider_event("end", end_year_slider, end_year_entry, start_year_entry, time_range[-1], selected_start_label_year, selected_end_label_year, time_dif))
 end_year_slider.pack(fill=ctk.X, pady=(5,15))
 
 end_hour_entry = sliders_frame("End", "hour : minute : second", tabview)
-end_hour_slider = ctk.CTkSlider(tabview.tab("End"), height=20, from_=0, to=24*60*2-1, number_of_steps=24*60*2-1, state="disabled", command=lambda value: hour_slider_event("end", str(time[-1]).split(" ")[1], time[-1].strftime("%Y-%m-%d"), end_year_entry, start_year_entry, end_hour_entry, start_hour_entry, end_hour_slider, selected_start_label_hour, selected_end_label_hour))
+end_hour_slider = ctk.CTkSlider(tabview.tab("End"), height=20, from_=0, to=24*60*2-1, number_of_steps=24*60*2-1, state="disabled", command=lambda value: hour_slider_event("end", str(time_range[-1]).split(" ")[1], time_range[-1].strftime("%Y-%m-%d"), end_year_entry, start_year_entry, end_hour_entry, start_hour_entry, end_hour_slider, selected_start_label_hour, selected_end_label_hour))
 end_hour_slider.pack(fill=ctk.X, pady=(5,0))
 
 

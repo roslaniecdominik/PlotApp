@@ -38,8 +38,7 @@ def time_column(data):
 
 def merge_data(data, selected_data, filepath):
     data_listname, x = match_data(selected_data)
-
-
+    
     if len(filepath) > 2:
         data_to_merge = data
         data_listname.append("datetime")
@@ -49,10 +48,10 @@ def merge_data(data, selected_data, filepath):
                 data = pd.read_csv(filepath[i+1], sep=';', index_col=False, skipinitialspace=True)
                 data = time_column(data)
                 data = data[data_listname]
-        
-                merged = pd.concat([data, data_to_merge])
+                merged = pd.concat([data_to_merge, data])
                 data_to_merge = merged
         data = merged
+
 
     elif len(filepath) == 2:
         data_last = pd.read_csv(filepath[-1], sep=';', index_col=False, skipinitialspace=True)
