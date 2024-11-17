@@ -13,8 +13,9 @@ def time_updater (time, year_entry, hour_entry, year_slider, selected_year_label
         selected_year_label.configure(text=time.strftime("%Y-%m-%d"))
         selected_hour_label.configure(text=time.strftime("%H:%M:%S"))
 
-def year_slider_event(id, slider1, entry1, entry2, time, selected_start_label_year, selected_end_label_year, time_dif):
+def year_slider_event(id, slider1, entry1, entry2, time, selected_start_label_year, selected_end_label_year, time_dif, hour_label1, hour_label2):
     
+
     if entry2.get() !="":
         if entry2.get() == str(time).split()[0]:
 
@@ -29,16 +30,24 @@ def year_slider_event(id, slider1, entry1, entry2, time, selected_start_label_ye
             pass
 
         else:
-
             year = datetime.strptime(entry2.get(), "%Y-%m-%d")
-
+            print(hour_label1.get(), "<", hour_label2.get())
+            # print(time - year, int((time - year).days))
             if id == "start":
-                slider1.configure(from_=0, to=int((year - time).days), number_of_steps=int((year - time).days))
-                selected_date = time + timedelta(days=slider1.get())
+                if hour_label1.get() > hour_label2.get():
+                    slider1.configure(from_=0, to=int((year - time).days), number_of_steps=int((year - time).days))
+                    selected_date = time + timedelta(days=slider1.get())
+                else:
+                    slider1.configure(from_=0, to=int((year - time).days)+1, number_of_steps=int((year - time).days)+1)
+                    selected_date = time + timedelta(days=slider1.get())
 
             elif id == "end":
-                slider1.configure(from_=0, to=int((time - year).days), number_of_steps=int((time - year).days))
-                selected_date = year + timedelta(days=slider1.get())
+                if hour_label1.get() < hour_label2.get():
+                    slider1.configure(from_=0, to=int((time - year).days-1), number_of_steps=int((time - year).days-1))
+                    selected_date = year + timedelta(days=(slider1.get()+1))
+                else:
+                    slider1.configure(from_=0, to=int((time - year).days), number_of_steps=int((time - year).days))
+                    selected_date = year + timedelta(days=slider1.get())
 
             entry1.delete(0, ctk.END)
             entry1.insert(0, selected_date.strftime("%Y-%m-%d"))

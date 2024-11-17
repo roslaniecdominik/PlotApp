@@ -17,11 +17,14 @@ from solutionGenerator import solution_generator
 data_dict = defining_data()
 color_index = 0
 
+global selected_start_label_hour, selected_end_label_hour
+
+
 def date_uploadig():
-    if tabview.get() == "Start" and end_year_entry.get() == str(time[0]).split()[0]:
+    if tabview.get() == "Start" and end_year_entry.get() == str(time_range[0]).split()[0]:
         start_year_entry.delete(0, ctk.END)
         start_year_entry.insert(0, end_year_entry.get())
-    elif tabview.get() == "End" and start_year_entry.get() == str(time[-1]).split()[0]:
+    elif tabview.get() == "End" and start_year_entry.get() == str(time_range[-1]).split()[0]:
         end_year_entry.delete(0, ctk.END)
         end_year_entry.insert(0, start_year_entry.get())
 
@@ -291,7 +294,7 @@ tabview.add("Start")
 tabview.add("End")
 
 start_year_entry = sliders_frame("Start", "year - month - day", tabview)
-start_year_slider = ctk.CTkSlider(tabview.tab("Start"), height=20, from_=0, to=10, number_of_steps=10, state="disabled", command=lambda value: year_slider_event("start", start_year_slider, start_year_entry, end_year_entry, time_range[0], selected_start_label_year, selected_end_label_year, time_dif))
+start_year_slider = ctk.CTkSlider(tabview.tab("Start"), height=20, from_=0, to=10, number_of_steps=10, state="disabled", command=lambda value: year_slider_event("start", start_year_slider, start_year_entry, end_year_entry, time_range[0], selected_start_label_year, selected_end_label_year, time_dif, start_hour_entry, end_hour_entry))
 start_year_slider.pack(fill=ctk.X, pady=(5,15))
 
 
@@ -300,7 +303,7 @@ start_hour_slider = ctk.CTkSlider(tabview.tab("Start"), height=20, from_=0, to=2
 start_hour_slider.pack(fill=ctk.X, pady=(5,0))
 
 end_year_entry = sliders_frame("End", "year - month - day", tabview)
-end_year_slider = ctk.CTkSlider(tabview.tab("End"), height=20, from_=0, to=10, number_of_steps=10, state="disabled", command=lambda value: year_slider_event("end", end_year_slider, end_year_entry, start_year_entry, time_range[-1], selected_start_label_year, selected_end_label_year, time_dif))
+end_year_slider = ctk.CTkSlider(tabview.tab("End"), height=20, from_=0, to=10, number_of_steps=10, state="disabled", command=lambda value: year_slider_event("end", end_year_slider, end_year_entry, start_year_entry, time_range[-1], selected_start_label_year, selected_end_label_year, time_dif, end_hour_entry, start_hour_entry))
 end_year_slider.pack(fill=ctk.X, pady=(5,15))
 
 end_hour_entry = sliders_frame("End", "hour : minute : second", tabview)
