@@ -7,9 +7,9 @@ import time
 
 from buttonState import buttonState
 from centerWindow import center_window
-from dataConfiguration import merge_data, time_column
+from dataConfiguration import merge_data, time_column, defining_data
 from frames import minmax_frame, sliders_frame, selected_time
-from plotCreator import create_plot, defining_data
+from plotCreator import create_plot
 from sliderEvent import year_slider_event, hour_slider_event, time_updater
 from timeLabelClearing import timeLabelClearing
 from solutionGenerator import solution_generator
@@ -110,6 +110,9 @@ def read_data(event):
     selected_solution = solution_generator(selected_station_solution.split("(")[1].split(")")[0])
 
     filepaths_cut = [filepath for filepath in filepaths if selected_station in filepath and selected_solution in filepath]
+
+    
+    data_dict, single_plot, triple_plot = defining_data()
 
     various_data = []
     for filepath in filepaths_cut:

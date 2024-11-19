@@ -1,6 +1,20 @@
 import pandas as pd
 import customtkinter as ctk
 
+def defining_data():
+    
+    data_dict = {"PDop": "DOP factors", 
+                "RecX": "REC XYZ", 
+                "RecmX": "RECm XYZ", 
+                "mIonDel": "ION",
+                "RecN": "ENU"}
+    single_plot = ["DOP factors", "ION"]
+    triple_plot = ["REC XYZ", "RECm XYZ", "ENU"]
+    return data_dict, single_plot, triple_plot
+
+
+
+
 def match_data(data):
     match data:
         case "DOP factors":
@@ -15,6 +29,9 @@ def match_data(data):
         case "ION":
             data_listname = ["mIonDel"]
             data_colors = ["red"]
+        case "ENU":
+            data_listname = ["RecN", "RecE", "RecU"]
+            data_colors = ["red", "green", "blue"]
     return data_listname, data_colors
 
 def time_column(data):

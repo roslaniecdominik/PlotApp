@@ -31,8 +31,7 @@ def year_slider_event(id, slider1, entry1, entry2, time, selected_start_label_ye
 
         else:
             year = datetime.strptime(entry2.get(), "%Y-%m-%d")
-            print(hour_label1.get(), "<", hour_label2.get())
-            # print(time - year, int((time - year).days))
+
             if id == "start":
                 if hour_label1.get() > hour_label2.get():
                     slider1.configure(from_=0, to=int((year - time).days), number_of_steps=int((year - time).days))
