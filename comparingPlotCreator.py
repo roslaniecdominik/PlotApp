@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import customtkinter as ctk
+import numpy as np
 
 from dataConfiguration import defining_data, match_data
 from matplotlib.ticker import ScalarFormatter
@@ -163,8 +164,8 @@ def comparing_window(station2_menu_fullVar, filepaths, selected_data, cut_data, 
                         ax[i, 1].ticklabel_format(useOffset=False, axis='y', style='plain')
 
                     extend_time = f"{datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")}  -  {datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")}"
-                    ax[0,0].text(-0.2, 1.4, f"{selected_station}, {extend_time}", transform=ax[0,0].transAxes, va='top', ha='left', fontsize=11)
-                    ax[0,0].text(-0.1, 1.2, '{:>13}'.format('[m]'), transform=ax[0,0].transAxes, va='top', ha='left', fontsize=10)
+                    ax[0,0].text(-0.2, 1.4, f"{selected_station} vs {selected_station_solution2}      {extend_time}", transform=ax[0,0].transAxes, va='top', ha='left', fontsize=11)
+                    ax[0,0].text(-0.1, 1.2, '{:>11}'.format('[m]'), transform=ax[0,0].transAxes, va='top', ha='left', fontsize=10)
                     ax[-1,0].set_xlabel(xaxis_label, font="Verdana")
 
                     fig.subplots_adjust(left=0.099,right=0.98, hspace=0.4, wspace=0.2)
@@ -185,10 +186,24 @@ def comparing_window(station2_menu_fullVar, filepaths, selected_data, cut_data, 
                     y_ax = time_data.loc[time_data["Sol"] == solutions[0], data_listname[1]]
                     x_ax2 = time_data.loc[time_data["Sol"] == solutions[1], data_listname[0]]
                     y_ax2 = time_data.loc[time_data["Sol"] == solutions[1], data_listname[1]]
+                    median_x = np.nanmedian(x_ax)
+                    median_y = np.nanmedian(y_ax)
+                    ax.grid(True)
+
+                    ax.axhline(median_y, color='black', linewidth=1, linestyle='-', zorder=1)
+                    ax.axvline(median_x, color='black', linewidth=1, linestyle='-', zorder=2)
+                    ax.scatter(x_ax, y_ax, color="red", zorder=3, s=10)
+                    ax.scatter(x_ax2, y_ax2, color="green", zorder=4, s=10)
                     
-                    ax.scatter(x_ax, y_ax, color="red")
-                    ax.scatter(x_ax2, y_ax2, color="green")
+                    
                     fig.subplots_adjust(hspace=0.4, wspace=0.3)
+                    ax.set_title(selected_data, font="Verdana", fontsize=14, fontweight="light")
+
+                    formatter = ScalarFormatter(useOffset=False, useMathText=False)
+                    formatter.set_scientific(False) 
+
+                    ax.xaxis.set_major_formatter(formatter)
+                    ax.yaxis.set_major_formatter(formatter)
 
                     layers_widget, canvas_widget, toolbar_widget = plot_frames(fig, plot_frame, layers_frame)
 

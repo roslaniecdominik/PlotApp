@@ -54,18 +54,3 @@ def plot_frames(fig, plot_frame, layers_frame):
     layers_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 10))
 
     return layers_frame_on, widget, toolbar_frame
-
-    # canvas_plot = FigureCanvasTkAgg(fig, plot_frame)
-    # canvas_plot.draw()
-    # widget = canvas_plot.get_tk_widget()
-    # widget.pack(side="top", fill=ctk.BOTH, expand=True)
-    
-    # toolbar_frame = ctk.CTkFrame(plot_frame)
-    # toolbar_frame.pack(side="bottom", fill="x")
-    # toolbar = NavigationToolbar2Tk(canvas_plot, toolbar_frame)
-    # toolbar.update()
-
-    # layers_frame_on = ctk.CTkFrame(layers_frame)
-    # layers_frame_on.pack(side="bottom", fill="x")
-    # layers_label = ctk.CTkLabel(layers_frame_on, text="Layers", font=("Helvetica", 22))
-    # layers_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 10))

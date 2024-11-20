@@ -24,7 +24,6 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         time_data = data.loc[(data['datetime'] >= start_time) & (data['datetime'] <= end_time)]
         data_listname, x = match_data(selected_data)
         cut_column = data_listname
-        # cut_column.insert(0, "Stat")
         cut_column.insert(0, "datetime")
 
         cut_data = time_data[cut_column]
@@ -79,11 +78,11 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 ax.set_xlabel(xaxis_label, font="Verdana")
                 ax.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
                 ax.grid(True)
-                ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
                 ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
                 ax.ticklabel_format(useOffset=False, axis='y', style='plain')
                 extend_time = f"{datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")}  -  {datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")}"
                 ax.text(-0.12, 1.10, f"{selected_station}, {extend_time}", transform=ax.transAxes, va='top', ha='left', fontsize=11)
+                fig.subplots_adjust(left=0.15)
 
                 return plot_objects, fig, ax
 
@@ -97,15 +96,14 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                     ax[i].set_title(layer_name)
                     ax[i].xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
                     ax[i].grid(True)
-                    ax[i].legend(loc='center left', bbox_to_anchor=(1, 0.5))
                     ax[i].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
                     ax[i].ticklabel_format(useOffset=False, axis='y', style='plain')
 
                 extend_time = f"{datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")}  -  {datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")}"
-                ax[0].text(-0.2, 1.5, f"{selected_station}, {extend_time}", transform=ax[0].transAxes, va='top', ha='left', fontsize=11)
-                ax[0].text(-0.1, 1.2, '{:>13}'.format('[m]'), transform=ax[0].transAxes, va='top', ha='left', fontsize=10)
+                ax[0].text(-0.1, 1.5, f"{selected_station}, {extend_time}", transform=ax[0].transAxes, va='top', ha='left', fontsize=11)
+                ax[0].text(-0.1, 1.2, '{:>22}'.format('[m]'), transform=ax[0].transAxes, va='top', ha='left', fontsize=10)
                 ax[-1].set_xlabel(xaxis_label, font="Verdana")
-
+                fig.subplots_adjust(left=0.01)
                 fig.tight_layout()
                 plot_objects = []
                 return plot_objects, fig, ax
@@ -151,7 +149,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         secondStation_frame = ctk.CTkFrame(right_frame, fg_color="transparent")
         secondStation_frame.pack(side=ctk.TOP, fill=ctk.X)
 
-        secondStation_label = ctk.CTkLabel(secondStation_frame, text="Compare data \nwith second station", font=("Helvetica", 16))
+        secondStation_label = ctk.CTkLabel(secondStation_frame, text="Compare data \nwith another solution", font=("Helvetica", 16))
         secondStation_label.pack(side=ctk.TOP, fill=ctk.X, pady=(50, 20))
 
         error_label = ctk.CTkTextbox(right_frame, font=("Helvetica", 14), text_color="red", wrap="word", fg_color="transparent", cursor="arrow")

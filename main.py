@@ -232,7 +232,7 @@ center_window(app, 700, 500)
 # -File section-
 file_section = ctk.CTkFrame(app, fg_color="transparent")
 file_section.pack(side=ctk.TOP, fill=ctk.BOTH, padx=55, pady=10)
-open_file_button = ctk.CTkButton(file_section, text="Load file", width=100, bg_color="transparent", command=open_file)
+open_file_button = ctk.CTkButton(file_section, text="Upload file", width=100, bg_color="transparent", command=open_file)
 open_file_button.pack(side=ctk.LEFT, fill=ctk.BOTH)
 filename_entry = ctk.CTkEntry(file_section, border_width=0)
 filename_entry.pack(side=ctk.RIGHT, fill=ctk.BOTH, padx=(10,0), expand=True)
