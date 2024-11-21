@@ -8,6 +8,7 @@ from centerWindow import center_window
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from solutionGenerator import solution_generator
 from layerButtons import layer_buttons
+from comparingPlotCreator import comparing_window
 
 data_dict, single_plot, triple_plot = defining_data()
 
@@ -124,20 +125,17 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         new_window.attributes("-topmost", True)
         new_window.after(500, stop)
 
+    
         
-
-        right_frame = ctk.CTkFrame(new_window, fg_color="#333333")
+        right_frame = ctk.CTkFrame(new_window)
         right_frame.pack(side=ctk.RIGHT, fill=ctk.Y)
-
         
-        layers_frame = ctk.CTkFrame(right_frame, fg_color="transparent")
-        layers_frame.pack(side=ctk.TOP, fill=ctk.Y)
 
 
-        layers_label = ctk.CTkLabel(layers_frame, text="Layers", font=("Helvetica", 22))
+        layers_label = ctk.CTkLabel(right_frame, text="Layers", font=("Helvetica", 22))
         layers_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 50))
 
-        layer_buttons(fig, ax, data_listname, layers_frame, data_colors)
+        layer_buttons(fig, ax, data_listname, right_frame, data_colors)
 
         
 
@@ -146,15 +144,8 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
             station2_list.remove(selected_station)
 
 
-        secondStation_frame = ctk.CTkFrame(right_frame, fg_color="transparent")
-        secondStation_frame.pack(side=ctk.TOP, fill=ctk.X)
-
-        secondStation_label = ctk.CTkLabel(secondStation_frame, text="Compare data \nwith another solution", font=("Helvetica", 16))
+        secondStation_label = ctk.CTkLabel(right_frame, text="Compare data \nwith another solution", font=("Helvetica", 16))
         secondStation_label.pack(side=ctk.TOP, fill=ctk.X, pady=(50, 20))
-
-        error_label = ctk.CTkTextbox(right_frame, font=("Helvetica", 14), text_color="red", wrap="word", fg_color="transparent", cursor="arrow")
-        error_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 50))
-        error_label.configure(state="disabled")
         
         def station2_fun(event):
             def shorten_label(text, max_length=14):
@@ -164,13 +155,14 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
             station2_menu_fullVar.set(event)
             station2_menu.set(shorten_label(event)) 
 
-        station2_menu_fullVar = ctk.StringVar(secondStation_frame)
+        station2_menu_fullVar = ctk.StringVar(right_frame)
         station2_menu_variable = ctk.StringVar(value="Select station ...")
-        station2_menu = ctk.CTkOptionMenu(secondStation_frame, width=150, values=[], variable=station2_menu_variable, command=station2_fun)
+        station2_menu = ctk.CTkOptionMenu(right_frame, width=150, values=[], variable=station2_menu_variable, command=station2_fun)
         station2_menu.pack(side=ctk.TOP, pady=(0, 20))
         station2_menu.configure(values=station2_list)
 
-        from comparingPlotCreator import comparing_window
+
+        
         def comparing_window_fun():
             comparing_window(
                 station2_menu_fullVar,
@@ -188,12 +180,16 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 app
             )
 
-        compare_button = ctk.CTkButton(secondStation_frame, text="Compare", command=comparing_window_fun)
+        compare_button = ctk.CTkButton(right_frame, text="Compare", command=comparing_window_fun)
 
         if selected_data == "DOP factors":
             compare_button.configure(state="disabled")
             
         compare_button.pack(side=ctk.TOP)
+
+        error_label = ctk.CTkTextbox(right_frame, font=("Helvetica", 14), text_color="red", wrap="word", fg_color="transparent", cursor="arrow")
+        error_label.pack(side=ctk.TOP, fill="both", pady=10)
+        error_label.configure(state="disabled")
 
         canvas_plot = FigureCanvasTkAgg(fig, master=new_window)
         canvas_plot.get_tk_widget().pack(fill=ctk.BOTH, expand=True)

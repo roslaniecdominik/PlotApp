@@ -1,7 +1,9 @@
 import matplotlib.pyplot as plt
 import customtkinter as ctk
 import numpy as np
+import pandas as pd
 
+from dataConfiguration import merge_data, time_column
 from dataConfiguration import defining_data, match_data
 from matplotlib.ticker import ScalarFormatter
 from datetime import datetime
@@ -9,6 +11,7 @@ from centerWindow import center_window
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from solutionGenerator import solution_generator
 from frames import plot_frames
+from layerButtons import layer_buttons
 
 data_dict, single_plot, triple_plot = defining_data()
 
@@ -19,33 +22,67 @@ def comparing_window(station2_menu_fullVar, filepaths, selected_data, cut_data, 
             data_listname, data_colors = match_data(selected_data)
 
             selected_station_solution2 = station2_menu_fullVar.get()
-            selected_station2 = selected_station_solution2.split(" ")[0]
-            selected_solution2 = solution_generator(selected_station_solution2.split("(")[1].split(")")[0])
+            
+            def error_message(text):
+                error_label.configure(state="normal")
+                
+                if (len(error_label.get("1.0", "end"))) == 1:
+                    error_label.insert("end", text)
+                
+                error_label.configure(state="disabled")
+                
 
-            filepaths_cut = [filepath for filepath in filepaths if selected_station2 in filepath and selected_solution2 in filepath]
+            if len(selected_station_solution2) == 0:
+                error_message("Select second solution")
+                has_common_times = False
             
-            filepath = []
-            for key, value in data_dict.items():
-                if value == selected_data:
-                    for i in filepaths_cut:
-                        with open(i, "r") as file:
-                            first_row = file.readline()
-                            if key in first_row:
-                                filepath.append(i)
-            import pandas as pd
-            from dataConfiguration import merge_data, time_column
-            data2 = pd.read_csv(filepath[0], sep=';', index_col=False, skipinitialspace=True)
-            data2 = time_column(data2)
-            data2 = merge_data(data2, selected_data, filepath)
-            cut_data2 = data2[cut_column]
-            cut_data2 = cut_data2.copy()
-            cut_data2.loc[:, "Sol"] = selected_solution2
-            solutions = [solution_generator(selected_station.split("(")[1].split(")")[0]), solution_generator(selected_station_solution2.split("(")[1].split(")")[0])]
-            has_common_times = not set(cut_data['datetime']).isdisjoint(cut_data2['datetime'])
+            else:
+                error_label.configure(state="normal")
+                error_label.delete("0.0", "end")
+                error_label.configure(state="disabled")
+                
+                selected_station2 = selected_station_solution2.split(" ")[0]
+                selected_solution2 = solution_generator(selected_station_solution2.split("(")[1].split(")")[0])
+
+                filepaths_cut = [filepath for filepath in filepaths if selected_station2 in filepath and selected_solution2 in filepath]
+                
+                filepath = []
+                for key, value in data_dict.items():
+                    if value == selected_data:
+                        for i in filepaths_cut:
+                            with open(i, "r") as file:
+                                first_row = file.readline()
+                                if key in first_row:
+                                    filepath.append(i)
+
+
+                if len(filepath) == 0:
+                    error_message("The second station doesn't have same data")
+                    has_common_times = False
+                    
+                else:
+                    error_label.configure(state="normal")
+                    error_label.delete("0.0", "end")
+                    error_label.configure(state="disabled")
+                
+                    
+                    data2 = pd.read_csv(filepath[0], sep=';', index_col=False, skipinitialspace=True)
+                    data2 = time_column(data2)
+                    data2 = merge_data(data2, selected_data, filepath)
+                    cut_data2 = data2[cut_column]
+                    cut_data2 = cut_data2.copy()
+                    cut_data2.loc[:, "Sol"] = selected_solution2
+                    solutions = [solution_generator(selected_station.split("(")[1].split(")")[0]), solution_generator(selected_station_solution2.split("(")[1].split(")")[0])]
+                    has_common_times = not set(cut_data['datetime']).isdisjoint(cut_data2['datetime'])
             
-            if has_common_times:
-                error_label.delete("1.0", "end")
-                error_label.see("end")
+            if not has_common_times:
+                error_message("The second station doesn't have common time")
+                
+            else:
+                error_label.configure(state="normal")
+                error_label.delete("0.0", "end")
+                error_label.configure(state="disabled")
+                
                 
                 #Empty cell
                 all_times = pd.DataFrame({'datetime': pd.concat([cut_data['datetime'], cut_data2['datetime']]).unique()})
@@ -88,16 +125,16 @@ def comparing_window(station2_menu_fullVar, filepaths, selected_data, cut_data, 
                 def plot_position(plot_frame, layers_frame):
                     global canvas_widget, toolbar_widget, layers_widget
 
-                    def layer_buttons(ax, layers_frame_on):
+                    def layer_buttons_comp(ax, layers_frame_on):
                         def toggle_visibility(name):
                             name.set_visible(not name.get_visible())
                             plt.draw()
 
-                        layer_list = [selected_station, selected_station_solution2, "Difference"]
+                        layer_list = [selected_station.split("(")[1].split(")")[0], selected_station_solution2.split("(")[1].split(")")[0], "Difference"]
 
                         layer_dict = {
-                            selected_station: 0,
-                            selected_station_solution2: 0,
+                            selected_station.split("(")[1].split(")")[0]: 0,
+                            selected_station_solution2.split("(")[1].split(")")[0]: 0,
                             "Difference": 1
                         }
                         
@@ -107,13 +144,13 @@ def comparing_window(station2_menu_fullVar, filepaths, selected_data, cut_data, 
                             i += 1
                             if i == len(layer_dict)-1:
                                 i = 0
-
+                                
                             layer_label = ctk.CTkLabel(layers_frame_on, text=key)
                             layer_label.pack(padx=10, pady=(10,5))
                         
                             for j, layer_name in enumerate(ax):
 
-                                layer_frame = ctk.CTkFrame(layers_frame_on, fg_color="#404040")
+                                layer_frame = ctk.CTkFrame(layers_frame_on)
                                 layer_frame.pack(side=ctk.TOP, padx=10, pady=5)
 
                                 toggle_button = ctk.CTkCheckBox(layer_frame, text=data_listname[j], command=lambda line=ax[j, layer_dict[key]].get_lines()[i]: toggle_visibility(line))
@@ -171,7 +208,7 @@ def comparing_window(station2_menu_fullVar, filepaths, selected_data, cut_data, 
                     fig.subplots_adjust(left=0.099,right=0.98, hspace=0.4, wspace=0.2)
                     
                     layers_widget, canvas_widget, toolbar_widget = plot_frames(fig, plot_frame, layers_frame)
-                    layer_buttons(ax, layers_widget)
+                    layer_buttons_comp(ax, layers_widget)
 
 
                 
@@ -190,10 +227,11 @@ def comparing_window(station2_menu_fullVar, filepaths, selected_data, cut_data, 
                     median_y = np.nanmedian(y_ax)
                     ax.grid(True)
 
-                    ax.axhline(median_y, color='black', linewidth=1, linestyle='-', zorder=1)
-                    ax.axvline(median_x, color='black', linewidth=1, linestyle='-', zorder=2)
                     ax.scatter(x_ax, y_ax, color="red", zorder=3, s=10)
                     ax.scatter(x_ax2, y_ax2, color="green", zorder=4, s=10)
+                    ax.axhline(median_y, color='black', linewidth=1, linestyle='-', zorder=1)
+                    ax.axvline(median_x, color='black', linewidth=1, linestyle='-', zorder=2)
+                    
                     
                     
                     fig.subplots_adjust(hspace=0.4, wspace=0.3)
@@ -206,6 +244,8 @@ def comparing_window(station2_menu_fullVar, filepaths, selected_data, cut_data, 
                     ax.yaxis.set_major_formatter(formatter)
 
                     layers_widget, canvas_widget, toolbar_widget = plot_frames(fig, plot_frame, layers_frame)
+                    
+                    layer_buttons(fig, ax, [selected_station.split("(")[1].split(")")[0], selected_station_solution2.split("(")[1].split(")")[0]], layers_widget, data_colors=["red", "green"])
 
                 def clear_plot():
                     global canvas_widget, toolbar_widget, layers_widget
@@ -234,7 +274,7 @@ def comparing_window(station2_menu_fullVar, filepaths, selected_data, cut_data, 
 
                 new_window = ctk.CTkToplevel(app)
                 new_window.title("PLOT")
-                center_window(new_window, 1250, 650)
+                center_window(new_window, 1300, 650)
                 
                 def new_window_lvl():
                     new_window.attributes("-topmost", False)
@@ -245,27 +285,19 @@ def comparing_window(station2_menu_fullVar, filepaths, selected_data, cut_data, 
                 plot_frame.pack(side=ctk.LEFT, fill="both", expand=True)
                 
 
-                right_frame = ctk.CTkFrame(new_window, fg_color="#333333")
+                right_frame = ctk.CTkFrame(new_window, width=500)
                 right_frame.pack(side=ctk.RIGHT, fill=ctk.Y)
 
                 plot_view_label = ctk.CTkLabel(right_frame, text="View:", font=("Helvetica", 22))
-                plot_view_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 10))
+                plot_view_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 10), padx=70)
 
                 plot_view_variable = ctk.StringVar(value="Position")
                 plot_view = ctk.CTkOptionMenu(right_frame, width=150, values=["Position", "Ground track"], variable=plot_view_variable, command=on_option_change)
                 plot_view.pack(side=ctk.TOP, pady=(0,20))
                 plot_view.set("Position")
 
-                layers_frame = ctk.CTkFrame(right_frame)
-                layers_frame.pack(side=ctk.TOP, fill=ctk.Y)
+                layers_frame = ctk.CTkFrame(right_frame, fg_color="transparent")
+                layers_frame.pack(side=ctk.TOP, fill=ctk.BOTH)
 
-
+                
                 plot_position(plot_frame, layers_frame)
-
-            else:
-                error_label.configure(state="normal")
-                text = "The second station doesn't have common time"
-                if (len(error_label.get("1.0", "end"))) == 1:
-                    error_label.insert("end", text)
-                    
-                error_label.configure(state="disabled")

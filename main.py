@@ -3,7 +3,7 @@ from datetime import datetime
 from tkinter import filedialog, messagebox
 import threading
 import pandas as pd
-import time
+# 
 
 from buttonState import buttonState
 from centerWindow import center_window
@@ -271,7 +271,7 @@ data_menu.pack(side=ctk.RIGHT)
 
 # -Min & Max time section-
 MinMax_section = ctk.CTkFrame(app,fg_color="transparent", height=30)
-MinMax_section.pack(side=ctk.TOP, fill=ctk.X, expand=True, padx=100, pady=(5,0))
+MinMax_section.pack(side=ctk.TOP, fill=ctk.X, expand=True, padx=60, pady=(5,0))
 
 min_label, min_label_value = minmax_frame("Minumum time", MinMax_section)
 max_label, max_label_value = minmax_frame("Maximum time", MinMax_section)

@@ -49,7 +49,7 @@ def plot_frames(fig, plot_frame, layers_frame):
     toolbar.update()                 
     
     layers_frame_on = ctk.CTkFrame(layers_frame)
-    layers_frame_on.pack(side="bottom", fill="x")
+    layers_frame_on.pack(side="bottom", fill=ctk.X)
     layers_label = ctk.CTkLabel(layers_frame_on, text="Layers", font=("Helvetica", 22))
     layers_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 10))
 
