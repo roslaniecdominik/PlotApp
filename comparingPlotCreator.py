@@ -8,7 +8,6 @@ from dataConfiguration import defining_data, match_data
 from matplotlib.ticker import ScalarFormatter
 from datetime import datetime
 from centerWindow import center_window
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from solutionGenerator import solution_generator
 from frames import plot_frames
 from layerButtons import layer_buttons
@@ -16,13 +15,13 @@ from layerButtons import layer_buttons
 data_dict, single_plot, triple_plot = defining_data()
 
 
-def comparing_window(station2_menu_fullVar, filepaths, selected_data, cut_data, cut_column, selected_station, error_label, 
+def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, cut_data, cut_column, selected_station_solution, error_label, 
                      start_time, end_time, station_list, xaxis_set, xaxis_label, app):
-            
+        
             data_listname, data_colors = match_data(selected_data)
 
-            selected_station_solution2 = station2_menu_fullVar.get()
-            
+            selected_secondStation_solution = secondStation_menu_fullVar.get()
+
             def error_message(text):
                 error_label.configure(state="normal")
                 
@@ -32,7 +31,7 @@ def comparing_window(station2_menu_fullVar, filepaths, selected_data, cut_data, 
                 error_label.configure(state="disabled")
                 
 
-            if len(selected_station_solution2) == 0:
+            if len(selected_secondStation_solution) == 0:
                 error_message("Select second solution")
                 has_common_times = False
             
@@ -41,10 +40,16 @@ def comparing_window(station2_menu_fullVar, filepaths, selected_data, cut_data, 
                 error_label.delete("0.0", "end")
                 error_label.configure(state="disabled")
                 
-                selected_station2 = selected_station_solution2.split(" ")[0]
-                selected_solution2 = solution_generator(selected_station_solution2.split("(")[1].split(")")[0])
+                selected_solution_encoded = solution_generator(selected_station_solution.split("(")[1].split(")")[0])
+                selected_solution = solution_generator(selected_solution_encoded)
 
-                filepaths_cut = [filepath for filepath in filepaths if selected_station2 in filepath and selected_solution2 in filepath]
+                selected_secondStation = selected_secondStation_solution.split(" ")[0]
+                selected_secondSolution_encoded = solution_generator(selected_secondStation_solution.split("(")[1].split(")")[0])
+                selected_secondSolution = solution_generator(selected_secondSolution_encoded)
+
+                solutions = [selected_solution_encoded, selected_secondSolution_encoded]
+
+                filepaths_cut = [filepath for filepath in filepaths if selected_secondStation in filepath and selected_secondSolution_encoded in filepath]
                 
                 filepath = []
                 for key, value in data_dict.items():
@@ -66,14 +71,13 @@ def comparing_window(station2_menu_fullVar, filepaths, selected_data, cut_data, 
                     error_label.configure(state="disabled")
                 
                     
-                    data2 = pd.read_csv(filepath[0], sep=';', index_col=False, skipinitialspace=True)
-                    data2 = time_column(data2)
-                    data2 = merge_data(data2, selected_data, filepath)
-                    cut_data2 = data2[cut_column]
-                    cut_data2 = cut_data2.copy()
-                    cut_data2.loc[:, "Sol"] = selected_solution2
-                    solutions = [solution_generator(selected_station.split("(")[1].split(")")[0]), solution_generator(selected_station_solution2.split("(")[1].split(")")[0])]
-                    has_common_times = not set(cut_data['datetime']).isdisjoint(cut_data2['datetime'])
+                    secondData = pd.read_csv(filepath[0], sep=';', index_col=False, skipinitialspace=True)
+                    secondData = time_column(secondData)
+                    secondData = merge_data(secondData, selected_data, filepath)
+                    cut_secondData = secondData[cut_column]
+                    cut_secondData = cut_secondData.copy()
+                    cut_secondData.loc[:, "Sol"] = selected_secondSolution_encoded
+                    has_common_times = not set(cut_data['datetime']).isdisjoint(cut_secondData['datetime'])
             
             if not has_common_times:
                 error_message("The second station doesn't have common time")
@@ -85,16 +89,16 @@ def comparing_window(station2_menu_fullVar, filepaths, selected_data, cut_data, 
                 
                 
                 #Empty cell
-                all_times = pd.DataFrame({'datetime': pd.concat([cut_data['datetime'], cut_data2['datetime']]).unique()})
+                all_times = pd.DataFrame({'datetime': pd.concat([cut_data['datetime'], cut_secondData['datetime']]).unique()})
 
-                if cut_data["Sol"].iloc[0] == cut_data2["Sol"].iloc[0]:
-                    cut_data1_full = pd.merge(all_times, cut_data, on='datetime', how='left').assign(Stat=selected_station)
-                    cut_data2_full = pd.merge(all_times, cut_data2, on='datetime', how='left').assign(Stat=selected_station_solution2)
+                if cut_data["Sol"].iloc[0] == cut_secondData["Sol"].iloc[0]:
+                    cut_data1_full = pd.merge(all_times, cut_data, on='datetime', how='left').assign(Stat=selected_station_solution)
+                    cut_secondData_full = pd.merge(all_times, cut_secondData, on='datetime', how='left').assign(Stat=selected_secondStation_solution)
                 else:
                     cut_data1_full = pd.merge(all_times, cut_data, on='datetime', how='left').assign(Sol=solutions[0])
-                    cut_data2_full = pd.merge(all_times, cut_data2, on='datetime', how='left').assign(Sol=solutions[1])
+                    cut_secondData_full = pd.merge(all_times, cut_secondData, on='datetime', how='left').assign(Sol=solutions[1])
 
-                cut_data_merged = pd.concat([cut_data1_full, cut_data2_full], ignore_index=True).sort_values(by='datetime').reset_index(drop=True)
+                cut_data_merged = pd.concat([cut_data1_full, cut_secondData_full], ignore_index=True).sort_values(by='datetime').reset_index(drop=True)
                 time_data = cut_data_merged.loc[(cut_data_merged['datetime'] >= start_time) & (cut_data_merged['datetime'] <= end_time)]
                 time_data = time_data.copy()
                 colors2 = ["dodgerblue", "pink", "orange"]
@@ -102,11 +106,11 @@ def comparing_window(station2_menu_fullVar, filepaths, selected_data, cut_data, 
                 def solution_dataframe(time_data, data_listname, solutions):
                     sol_df = time_data[time_data["Sol"] == solutions[0]].reset_index(drop=True)
 
-                    if cut_data["Sol"].iloc[0] == cut_data2["Sol"].iloc[0]:
+                    if cut_data["Sol"].iloc[0] == cut_secondData["Sol"].iloc[0]:
                         
                         for layer_name in data_listname:
-                            cords1 = time_data.loc[time_data["Stat"] == selected_station, layer_name].reset_index(drop=True)
-                            cords2 = time_data.loc[time_data["Stat"] == selected_station_solution2, layer_name].reset_index(drop=True)
+                            cords1 = time_data.loc[time_data["Stat"] == selected_station_solution, layer_name].reset_index(drop=True)
+                            cords2 = time_data.loc[time_data["Stat"] == selected_secondStation_solution, layer_name].reset_index(drop=True)
                             sol_df[layer_name] = cords1 - cords2
                             
                     else:
@@ -130,11 +134,11 @@ def comparing_window(station2_menu_fullVar, filepaths, selected_data, cut_data, 
                             name.set_visible(not name.get_visible())
                             plt.draw()
 
-                        layer_list = [selected_station.split("(")[1].split(")")[0], selected_station_solution2.split("(")[1].split(")")[0], "Difference"]
+                        layer_list = [selected_solution, selected_secondSolution, "Difference"]
 
                         layer_dict = {
-                            selected_station.split("(")[1].split(")")[0]: 0,
-                            selected_station_solution2.split("(")[1].split(")")[0]: 0,
+                            selected_solution: 0,
+                            selected_secondSolution: 0,
                             "Difference": 1
                         }
                         
@@ -170,11 +174,11 @@ def comparing_window(station2_menu_fullVar, filepaths, selected_data, cut_data, 
                     fig, ax = plt.subplots(3, 2, figsize=(13,5))
 
                     for i, layer_name in enumerate(data_listname):
-                        if cut_data["Sol"].iloc[0] == cut_data2["Sol"].iloc[0]:
+                        if cut_data["Sol"].iloc[0] == cut_secondData["Sol"].iloc[0]:
                             sol_df = solution_dataframe(time_data, data_listname, station_list).reset_index(drop=True)
-                            cord_time = time_data.loc[time_data["Stat"] == selected_station, "datetime"].reset_index(drop=True)
-                            cord1 = time_data.loc[time_data["Stat"] == selected_station, layer_name].reset_index(drop=True)
-                            cord2 = time_data.loc[time_data["Stat"] == selected_station_solution2, layer_name].reset_index(drop=True)
+                            cord_time = time_data.loc[time_data["Stat"] == selected_station_solution, "datetime"].reset_index(drop=True)
+                            cord1 = time_data.loc[time_data["Stat"] == selected_station_solution, layer_name].reset_index(drop=True)
+                            cord2 = time_data.loc[time_data["Stat"] == selected_secondStation_solution, layer_name].reset_index(drop=True)
 
                         else:
                             sol_df = solution_dataframe(time_data, data_listname, solutions).reset_index(drop=True)
@@ -183,8 +187,8 @@ def comparing_window(station2_menu_fullVar, filepaths, selected_data, cut_data, 
                             cord2 = time_data.loc[time_data["Sol"] == solutions[1], layer_name].reset_index(drop=True)
 
                         
-                        line, = ax[i, 0].plot(cord_time, cord2, color=data_colors[i])
-                        line, = ax[i, 0].plot(cord_time, cord1, color=colors2[i])
+                        line, = ax[i, 0].plot(cord_time, cord1, color=data_colors[i])
+                        line, = ax[i, 0].plot(cord_time, cord2, color=colors2[i])
                         line, = ax[i, 1].plot(cord_time, sol_df[layer_name], color=data_colors[i])
                         ax[i, 0].set_title(layer_name)
                         ax[i, 0].xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
@@ -201,7 +205,7 @@ def comparing_window(station2_menu_fullVar, filepaths, selected_data, cut_data, 
                         ax[i, 1].ticklabel_format(useOffset=False, axis='y', style='plain')
 
                     extend_time = f"{datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")}  -  {datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")}"
-                    ax[0,0].text(-0.2, 1.4, f"{selected_station} vs {selected_station_solution2}      {extend_time}", transform=ax[0,0].transAxes, va='top', ha='left', fontsize=11)
+                    ax[0,0].text(-0.2, 1.4, f"{selected_station_solution} vs {selected_secondStation_solution}      {extend_time}", transform=ax[0,0].transAxes, va='top', ha='left', fontsize=11)
                     ax[0,0].text(-0.1, 1.2, '{:>11}'.format('[m]'), transform=ax[0,0].transAxes, va='top', ha='left', fontsize=10)
                     ax[-1,0].set_xlabel(xaxis_label, font="Verdana")
 
@@ -245,7 +249,7 @@ def comparing_window(station2_menu_fullVar, filepaths, selected_data, cut_data, 
 
                     layers_widget, canvas_widget, toolbar_widget = plot_frames(fig, plot_frame, layers_frame)
                     
-                    layer_buttons(fig, ax, [selected_station.split("(")[1].split(")")[0], selected_station_solution2.split("(")[1].split(")")[0]], layers_widget, data_colors=["red", "green"])
+                    layer_buttons(fig, ax, [selected_solution, selected_secondSolution], layers_widget, data_colors=["red", "green"])
 
                 def clear_plot():
                     global canvas_widget, toolbar_widget, layers_widget

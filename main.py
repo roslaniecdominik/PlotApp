@@ -3,7 +3,6 @@ from datetime import datetime
 from tkinter import filedialog, messagebox
 import threading
 import pandas as pd
-# 
 
 from buttonState import buttonState
 from centerWindow import center_window
@@ -46,7 +45,7 @@ def loading_animation():
         circle3.configure(fg_color="transparent")
 
 def create_plot_handler(): 
-    create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, data, selected_data, selected_station_solution, station_list, filepaths, app)
+    create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, filepaths, station_list, selected_station_solution, data, selected_data, app)
 
 def read_time():
     global data, selected_data, filepath, loading_check, time_range, time_dif

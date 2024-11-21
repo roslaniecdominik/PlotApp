@@ -12,9 +12,10 @@ from comparingPlotCreator import comparing_window
 
 data_dict, single_plot, triple_plot = defining_data()
 
-def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, data, selected_data, selected_station, station_list, filepaths, app):
+def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, filepaths, station_list, selected_station, data, selected_data, app):
     global loading_check
-
+    
+    
     start_time = f"{start_year_entry.get()} {start_hour_entry.get()}"
     end_time = f"{end_year_entry.get()} {end_hour_entry.get()}"
 
@@ -140,32 +141,32 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         
 
         if selected_station in station_list:
-            station2_list = station_list.copy()
-            station2_list.remove(selected_station)
+            secondStation_list = station_list.copy()
+            secondStation_list.remove(selected_station)
 
 
         secondStation_label = ctk.CTkLabel(right_frame, text="Compare data \nwith another solution", font=("Helvetica", 16))
         secondStation_label.pack(side=ctk.TOP, fill=ctk.X, pady=(50, 20))
         
-        def station2_fun(event):
+        def shorten_label(event):
             def shorten_label(text, max_length=14):
                 if len(text) > max_length:
                     return text[:max_length] + "..."
                 return text
-            station2_menu_fullVar.set(event)
-            station2_menu.set(shorten_label(event)) 
+            secondStation_menu_fullVar.set(event)
+            secondStation_menu.set(shorten_label(event)) 
 
-        station2_menu_fullVar = ctk.StringVar(right_frame)
-        station2_menu_variable = ctk.StringVar(value="Select station ...")
-        station2_menu = ctk.CTkOptionMenu(right_frame, width=150, values=[], variable=station2_menu_variable, command=station2_fun)
-        station2_menu.pack(side=ctk.TOP, pady=(0, 20))
-        station2_menu.configure(values=station2_list)
+        secondStation_menu_fullVar = ctk.StringVar(right_frame)
+        secondStation_menu_variable = ctk.StringVar(value="Select station ...")
+        secondStation_menu = ctk.CTkOptionMenu(right_frame, width=150, values=[], variable=secondStation_menu_variable, command=shorten_label)
+        secondStation_menu.pack(side=ctk.TOP, pady=(0, 20))
+        secondStation_menu.configure(values=secondStation_list)
 
 
         
         def comparing_window_fun():
             comparing_window(
-                station2_menu_fullVar,
+                secondStation_menu_fullVar,
                 filepaths,
                 selected_data,
                 cut_data,
