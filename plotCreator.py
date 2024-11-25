@@ -1,14 +1,18 @@
+import customtkinter as ctk
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 from tkinter import messagebox
-import customtkinter as ctk
-from dataConfiguration import match_data, defining_data
 from matplotlib.ticker import ScalarFormatter
-from centerWindow import center_window
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-from solutionGenerator import solution_generator
-from layerButtons import layer_buttons
+
+from components.dataConfiguration import match_data, defining_data
+from components.centerWindow import center_window
+from components.solutionGenerator import solution_generator
+from components.layerButtons import layer_buttons
+from components.xaxisLabel import xaxis_config
+
 from comparingPlotCreator import comparing_window
+
 
 data_dict, single_plot, triple_plot = defining_data()
 
@@ -34,35 +38,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
 
         time_diff = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") - datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
 
-        def xaxis_config (time_diff):
-            if (time_diff > timedelta(days=365*2)):
-                xaxis_set = "%y"
-                xaxis_label = "TIME [year]"
-            elif (time_diff <= timedelta(days=365*2)) and (time_diff > timedelta(days=6*31)):
-                xaxis_set = "%y-%m"
-                xaxis_label = "TIME [year-month]"
-            elif (time_diff <= timedelta(days=6*31)) and (time_diff > timedelta(days=2*31)):
-                xaxis_set = "%m-%d"
-                xaxis_label = "TIME [month-day]"
-            elif (time_diff <= timedelta(days=2*31)) and (time_diff > timedelta(days=31)):
-                xaxis_set = "%m-%d %H"
-                xaxis_label = "TIME [month-day hour]"
-            elif (time_diff <= timedelta(days=31)) and (time_diff > timedelta(days=1)):
-                xaxis_set = "%d %H:%M"
-                xaxis_label = "TIME [day hour:min]"
-            elif (time_diff <= timedelta(hours=24)) and (time_diff > timedelta(hours=1)):
-                xaxis_set = "%H:%M"
-                xaxis_label = "TIME [hour:min]"
-            elif time_diff < timedelta(minutes=60):
-                xaxis_set = "%M:%S"
-                xaxis_label = "TIME [min:sec]"
-            else:
-                xaxis_set = "%Y-%m-%d %H:%M"
-                xaxis_label = "TIME [year-month-day hour:min]"
-            return xaxis_set, xaxis_label
-        
-        xaxis_set, xaxis_label = xaxis_config(time_diff)
-        
+        xaxis_set, xaxis_label = xaxis_config(time_diff, timedelta)    
 
         if selected_data in single_plot:
 
@@ -131,15 +107,12 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         right_frame = ctk.CTkFrame(new_window)
         right_frame.pack(side=ctk.RIGHT, fill=ctk.Y)
         
-
-
         layers_label = ctk.CTkLabel(right_frame, text="Layers", font=("Helvetica", 22))
         layers_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 50))
 
         layer_buttons(fig, ax, data_listname, right_frame, data_colors)
 
         
-
         if selected_station in station_list:
             secondStation_list = station_list.copy()
             secondStation_list.remove(selected_station)
@@ -162,7 +135,6 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         secondStation_menu.pack(side=ctk.TOP, pady=(0, 20))
         secondStation_menu.configure(values=secondStation_list)
 
-
         
         def comparing_window_fun():
             comparing_window(
@@ -183,7 +155,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
 
         compare_button = ctk.CTkButton(right_frame, text="Compare", command=comparing_window_fun)
 
-        if selected_data == "DOP factors":
+        if selected_data in single_plot:
             compare_button.configure(state="disabled")
             
         compare_button.pack(side=ctk.TOP)

@@ -1,5 +1,4 @@
 import pandas as pd
-import customtkinter as ctk
 
 def defining_data():
     
@@ -11,8 +10,6 @@ def defining_data():
     single_plot = ["DOP factors", "ION"]
     triple_plot = ["REC XYZ", "RECm XYZ", "ENU"]
     return data_dict, single_plot, triple_plot
-
-
 
 
 def match_data(data):

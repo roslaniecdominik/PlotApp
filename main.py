@@ -4,14 +4,14 @@ from tkinter import filedialog, messagebox
 import threading
 import pandas as pd
 
-from buttonState import buttonState
-from centerWindow import center_window
-from dataConfiguration import merge_data, time_column, defining_data
-from frames import minmax_frame, sliders_frame, selected_time
+from components.buttonState import buttonState
+from components.centerWindow import center_window
+from components.dataConfiguration import merge_data, time_column, defining_data
+from components.frames import minmax_frame, sliders_frame, selected_time
 from plotCreator import create_plot
-from sliderEvent import year_slider_event, hour_slider_event, time_updater
-from timeLabelClearing import timeLabelClearing
-from solutionGenerator import solution_generator
+from components.sliderEvent import year_slider_event, hour_slider_event, time_updater
+from components.timeLabelClearing import timeLabelClearing
+from components.solutionGenerator import solution_generator
 
 data_dict = defining_data()
 color_index = 0

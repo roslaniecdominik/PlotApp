@@ -3,14 +3,15 @@ import customtkinter as ctk
 import numpy as np
 import pandas as pd
 
-from dataConfiguration import merge_data, time_column
-from dataConfiguration import defining_data, match_data
 from matplotlib.ticker import ScalarFormatter
 from datetime import datetime
-from centerWindow import center_window
-from solutionGenerator import solution_generator
-from frames import plot_frames
-from layerButtons import layer_buttons
+
+from components.dataConfiguration import merge_data, time_column
+from components.dataConfiguration import defining_data, match_data
+from components.centerWindow import center_window
+from components.solutionGenerator import solution_generator
+from components.frames import plot_frames
+from components.layerButtons import layer_buttons
 
 data_dict, single_plot, triple_plot = defining_data()
 
