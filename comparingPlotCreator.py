@@ -162,10 +162,13 @@ def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, cut_d
                                 toggle_button.grid(row=0, column=0, padx=2, pady=2)
                                 toggle_button.select()
                                 
-                                if key == layer_list[0] or key == layer_list[2]:
-                                    buttons_line = ctk.CTkFrame(layer_frame, width=50, height=5, fg_color=data_colors[j])
+                                if key == layer_list[0]:
+                                    buttons_line = ctk.CTkFrame(layer_frame, width=50, height=5, fg_color="purple")
                                 elif key == layer_list[1]:
-                                    buttons_line = ctk.CTkFrame(layer_frame, width=50, height=5, fg_color=colors2[j])
+                                    buttons_line = ctk.CTkFrame(layer_frame, width=50, height=5, fg_color="orange")
+                                elif key == layer_list[2]:
+                                    buttons_line = ctk.CTkFrame(layer_frame, width=50, height=5, fg_color=data_colors[j])
+                                
                                 
                                 buttons_line.grid(row=0, column=2, padx=(0, 5))
 
@@ -188,8 +191,8 @@ def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, cut_d
                             cord2 = time_data.loc[time_data["Sol"] == solutions[1], layer_name].reset_index(drop=True)
 
                         
-                        line, = ax[i, 0].plot(cord_time, cord1, color=data_colors[i])
-                        line, = ax[i, 0].plot(cord_time, cord2, color=colors2[i])
+                        line, = ax[i, 0].plot(cord_time, cord1, color="purple")
+                        line, = ax[i, 0].plot(cord_time, cord2, color="orange")
                         line, = ax[i, 1].plot(cord_time, sol_df[layer_name], color=data_colors[i])
                         ax[i, 0].set_title(layer_name)
                         ax[i, 0].xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))

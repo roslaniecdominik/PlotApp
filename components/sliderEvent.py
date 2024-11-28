@@ -1,5 +1,7 @@
 import customtkinter as ctk
+import numpy as np
 from datetime import datetime, timedelta
+
 
 def time_updater (time, year_entry, hour_entry, year_slider, selected_year_label, selected_hour_label, time_dif):
         year_entry.delete(0, ctk.END)
@@ -192,3 +194,23 @@ def hour_slider_event(id, time, date, year_entry1, year_entry2, hour_entry1, hou
         slider1.configure(from_=0, to=24*60*2-1, number_of_steps=24*60*2-1)
         hour_entry1.delete(0, ctk.END)
         hour_entry1.insert(0, selected_date)
+
+def plot_updater_slider(value,  lines, axs, data_listname, canvas_plot, cut_data, station_range_text, selected_station):
+            start_index = int(value)
+            extend_time = f"{str(cut_data.iloc[start_index]['datetime'])}  -  {str(cut_data.iloc[-1]['datetime'])}"
+            
+            if type(axs) == np.ndarray:
+                for line, ax, data_column in zip(lines, axs, data_listname):
+                    line.set_data(cut_data['datetime'][start_index:], cut_data[data_column][start_index:])
+                    ax.relim()
+                    ax.autoscale_view()
+                station_range_text.set_text(f"{selected_station}, {extend_time}")
+
+            else:
+                for line, data_column in zip(lines, data_listname):
+                    line.set_data(cut_data['datetime'][start_index:], cut_data[data_column][start_index:])
+                    axs.relim()
+                    axs.autoscale_view()
+                station_range_text.set_text(f"{selected_station}, {extend_time}")
+                
+            canvas_plot.draw()

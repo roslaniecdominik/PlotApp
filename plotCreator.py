@@ -10,7 +10,7 @@ from components.centerWindow import center_window
 from components.solutionGenerator import solution_generator
 from components.layerButtons import layer_buttons
 from components.xaxisLabel import xaxis_config
-
+from components.sliderEvent import plot_updater_slider
 from comparingPlotCreator import comparing_window
 
 
@@ -39,57 +39,56 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         time_diff = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") - datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
 
         xaxis_set, xaxis_label = xaxis_config(time_diff, timedelta)    
-
+        start_index = 0
         if selected_data in single_plot:
 
             def plot():
-                fig, ax = plt.subplots(figsize=(10,6))
-                
+                fig, axs = plt.subplots(figsize=(10,6))
+                lines = []
                 plots = {}
-                plot_objects = []
 
                 for layer_name, color in zip(data_listname, data_colors):
-                    plots[layer_name], = ax.plot(cut_data["datetime"], cut_data[layer_name], color=color, linewidth=1, label=layer_name)
-                    plot_objects.append(plots[layer_name])
+                    plots[layer_name], = axs.plot(cut_data["datetime"], cut_data[layer_name], color=color, linewidth=1, label=layer_name)
+                    lines.append(plots[layer_name])
 
-                ax.set_title(selected_data, font="Verdana", fontsize=14, fontweight="light")
-                ax.set_xlabel(xaxis_label, font="Verdana")
-                ax.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
-                ax.grid(True)
-                ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
-                ax.ticklabel_format(useOffset=False, axis='y', style='plain')
+                axs.set_title(selected_data, font="Verdana", fontsize=14, fontweight="light")
+                axs.set_xlabel(xaxis_label, font="Verdana")
+                axs.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
+                axs.grid(True)
+                axs.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+                axs.ticklabel_format(useOffset=False, axis='y', style='plain')
                 extend_time = f"{datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")}  -  {datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")}"
-                ax.text(-0.12, 1.10, f"{selected_station}, {extend_time}", transform=ax.transAxes, va='top', ha='left', fontsize=11)
+                station_range_text = axs.text(-0.12, 1.10, f"{selected_station}, {extend_time}", transform=axs.transAxes, va='top', ha='left', fontsize=11)
                 fig.subplots_adjust(left=0.15)
-
-                return plot_objects, fig, ax
+                
+                return fig, axs, lines, station_range_text
 
         elif selected_data in triple_plot:
             def plot():
-                fig, ax = plt.subplots(3, 1, figsize=(10,6))
-                
+                fig, axs = plt.subplots(3, 1, figsize=(10,6))
+                lines = []
                 for i, layer_name in enumerate(data_listname):
 
-                    line, = ax[i].plot(cut_data["datetime"], cut_data[layer_name], color=data_colors[i], linewidth=1, label=layer_name)
-                    ax[i].set_title(layer_name)
-                    ax[i].xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
-                    ax[i].grid(True)
-                    ax[i].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
-                    ax[i].ticklabel_format(useOffset=False, axis='y', style='plain')
+                    line, = axs[i].plot(cut_data["datetime"][start_index:], cut_data[layer_name][start_index:], color=data_colors[i], linewidth=1, label=layer_name)
+                    axs[i].set_title(layer_name)
+                    axs[i].xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
+                    axs[i].grid(True)
+                    axs[i].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+                    axs[i].ticklabel_format(useOffset=False, axis='y', style='plain')
+                    lines.append(line)
 
                 extend_time = f"{datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")}  -  {datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")}"
-                ax[0].text(-0.1, 1.5, f"{selected_station}, {extend_time}", transform=ax[0].transAxes, va='top', ha='left', fontsize=11)
-                ax[0].text(-0.1, 1.2, '{:>22}'.format('[m]'), transform=ax[0].transAxes, va='top', ha='left', fontsize=10)
-                ax[-1].set_xlabel(xaxis_label, font="Verdana")
+                station_range_text = axs[0].text(-0.1, 1.5, f"{selected_station}, {extend_time}", transform=axs[0].transAxes, va='top', ha='left', fontsize=11)
+                axs[0].text(-0.1, 1.2, '{:>22}'.format('[m]'), transform=axs[0].transAxes, va='top', ha='left', fontsize=10)
+                axs[-1].set_xlabel(xaxis_label, font="Verdana")
                 fig.subplots_adjust(left=0.01)
                 fig.tight_layout()
-                plot_objects = []
-                return plot_objects, fig, ax
+                
+                return fig, axs, lines, station_range_text
 
         data_listname, data_colors = match_data(selected_data)
 
-        plot_objects, fig, ax = plot()
-        data_list = plot_objects
+        fig, axs, lines, station_range_text = plot()
 
         new_window = ctk.CTkToplevel(app)
         new_window.title("PLOT")
@@ -110,7 +109,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         layers_label = ctk.CTkLabel(right_frame, text="Layers", font=("Helvetica", 22))
         layers_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 50))
 
-        layer_buttons(fig, ax, data_listname, right_frame, data_colors)
+        layer_buttons(fig, axs, data_listname, right_frame, data_colors)
 
         
         if selected_station in station_list:
@@ -167,5 +166,14 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         canvas_plot = FigureCanvasTkAgg(fig, master=new_window)
         canvas_plot.get_tk_widget().pack(fill=ctk.BOTH, expand=True)
 
-        toolbar = NavigationToolbar2Tk(canvas_plot, new_window)
+        toolbar_slider_frame = ctk.CTkFrame(new_window, fg_color="#F0F0F0", corner_radius=0)
+        toolbar_slider_frame.pack(side=ctk.BOTTOM, fill=ctk.X)
+
+        toolbar = NavigationToolbar2Tk(canvas_plot, toolbar_slider_frame)
         toolbar.update()
+        toolbar.pack(side="left")
+        toolbar._message_label.config(width=22)
+        
+        data_slider = ctk.CTkSlider(toolbar_slider_frame, from_=0, to=cut_data.shape[0]-1, number_of_steps=cut_data.shape[0]-1, width=500, height=20, command=lambda value: plot_updater_slider(value, lines, axs, data_listname, canvas_plot, cut_data, station_range_text, selected_station))
+        data_slider.set(start_index)
+        data_slider.pack(side="right", expand=True, padx=5)

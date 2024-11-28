@@ -10,7 +10,6 @@ def layer_buttons(fig, ax, data_listname, layers_frame, data_colors):
     
     for i, layer_name in enumerate(data_listname):
         
-        
         if type(ax) != np.ndarray and any(isinstance(coll, PathCollection) for coll in ax.collections):
             
             layer_label = ctk.CTkLabel(layers_frame, text=data_listname[i])
