@@ -174,6 +174,6 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         toolbar.pack(side="left")
         toolbar._message_label.config(width=22)
         
-        data_slider = ctk.CTkSlider(toolbar_slider_frame, from_=0, to=cut_data.shape[0]-1, number_of_steps=cut_data.shape[0]-1, width=500, height=20, command=lambda value: plot_updater_slider(value, lines, axs, data_listname, canvas_plot, cut_data, station_range_text, selected_station))
+        data_slider = ctk.CTkSlider(toolbar_slider_frame, from_=0, to=cut_data.shape[0]-1, number_of_steps=cut_data.shape[0]-1, width=500, height=20, command=lambda value: plot_updater_slider(value, lines, axs, data_listname, canvas_plot, cut_data, station_range_text, selected_station, "", "", "", "", "", ""))
         data_slider.set(start_index)
         data_slider.pack(side="right", expand=True, padx=5)

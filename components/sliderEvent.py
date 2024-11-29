@@ -195,22 +195,58 @@ def hour_slider_event(id, time, date, year_entry1, year_entry2, hour_entry1, hou
         hour_entry1.delete(0, ctk.END)
         hour_entry1.insert(0, selected_date)
 
-def plot_updater_slider(value,  lines, axs, data_listname, canvas_plot, cut_data, station_range_text, selected_station):
+def plot_updater_slider(value,  lines, axs, data_listname, canvas_plot, cut_data, station_range_text, selected_station, selected_secondStation_solution, cord_time, cord1, cord2, sol_df, layer_name):
             start_index = int(value)
             extend_time = f"{str(cut_data.iloc[start_index]['datetime'])}  -  {str(cut_data.iloc[-1]['datetime'])}"
-            
-            if type(axs) == np.ndarray:
-                for line, ax, data_column in zip(lines, axs, data_listname):
-                    line.set_data(cut_data['datetime'][start_index:], cut_data[data_column][start_index:])
-                    ax.relim()
-                    ax.autoscale_view()
-                station_range_text.set_text(f"{selected_station}, {extend_time}")
 
+            if type(axs) == np.ndarray:
+                if axs.ndim == 1:
+                    for line, ax, data_column in zip(lines, axs, data_listname):
+                        line.set_data(cut_data['datetime'][start_index:], cut_data[data_column][start_index:])
+                        ax.relim()
+                        ax.autoscale_view()
+                    station_range_text.set_text(f"{selected_station}, {extend_time}")
+                if axs.ndim == 2:
+                    extend_time = f"{str(cord_time.iloc[start_index])}  -  {str(cord_time.iloc[-1])}"
+                    
+                    #xy
+                    for i, (line1, line2) in enumerate([lines[0], lines[2], lines[4]]):
+                        line1[0].set_data(cord_time[start_index:], cord1[start_index:])
+                        line2[0].set_data(cord_time[start_index:], cord2[start_index:])
+                        axs[i, 0].relim()
+                        axs[i, 0].autoscale_view()
+                        station_range_text.set_text(f"{selected_station} vs {selected_secondStation_solution}      {extend_time}")
+
+                    #compare
+                    for i, line in enumerate([lines[1], lines[3], lines[5]], start=3):
+                        line.set_data(cord_time[start_index:], sol_df[layer_name][start_index:],)
+                        axs[i - 3, 1].relim()
+                        axs[i - 3, 1].autoscale_view()
+                    
             else:
-                for line, data_column in zip(lines, data_listname):
-                    line.set_data(cut_data['datetime'][start_index:], cut_data[data_column][start_index:])
+                if selected_secondStation_solution != "":
+                    invisible_lines = data_listname
+
+                    extend_time = f"{str(cord_time.iloc[start_index]["datetime"])} - {str(cord_time.iloc[-1]["datetime"])}"
+                    x_axs = cord1
+                    y_axs = cord2
+                    x_axs2 = sol_df
+                    y_axs2 = layer_name
+
+                    lines[0].set_offsets(list(zip(x_axs[start_index:], y_axs[start_index:])))
+                    lines[1].set_offsets(list(zip(x_axs2[start_index:], y_axs2[start_index:])))
+                    invisible_lines[0].set_data(x_axs[start_index:], y_axs[start_index:])
+                    invisible_lines[1].set_data(x_axs2[start_index:], y_axs2[start_index:])
                     axs.relim()
                     axs.autoscale_view()
-                station_range_text.set_text(f"{selected_station}, {extend_time}")
+                    station_range_text.set_text(f"{selected_station} vs {selected_secondStation_solution}      {extend_time}")
+
+                    
+                else:
+                    for line, data_column in zip(lines, data_listname):
+                        line.set_data(cut_data['datetime'][start_index:], cut_data[data_column][start_index:])
+                        axs.relim()
+                        axs.autoscale_view()
+                    station_range_text.set_text(f"{selected_station}, {extend_time}")
                 
             canvas_plot.draw()

@@ -9,7 +9,7 @@ from components.centerWindow import center_window
 from components.dataConfiguration import merge_data, time_column, defining_data
 from components.frames import minmax_frame, sliders_frame, selected_time
 from plotCreator import create_plot
-from components.sliderEvent import year_slider_event, hour_slider_event, time_updater
+from components.sliderEvent import year_slider_event, hour_slider_event, time_updater, plot_updater_slider
 from components.timeLabelClearing import timeLabelClearing
 from components.solutionGenerator import solution_generator
 

@@ -36,21 +36,29 @@ def selected_time (parent, text):
     label_time.pack(side=ctk.RIGHT, fill=ctk.X, padx=(15,0))
     return label_date, label_time
 
-def plot_frames(fig, plot_frame, layers_frame):
-
+def plot_frames(fig, plot_frame, layers_frame, cut_data, lines, axs, data_listname, station_range_text, selected_station, selected_secondStation_solution, cord_time, cord1, cord2, sol_df, layer_name):
+    from components.sliderEvent import plot_updater_slider
+    start_index = 0
     canvas_plot = FigureCanvasTkAgg(fig, plot_frame)
     canvas_plot.draw()
     widget = canvas_plot.get_tk_widget()
     widget.pack(side="top", fill=ctk.BOTH, expand=True)
     
-    toolbar_frame = ctk.CTkFrame(plot_frame)
-    toolbar_frame.pack(side="bottom", fill="x")
-    toolbar = NavigationToolbar2Tk(canvas_plot, toolbar_frame)
-    toolbar.update()                 
+    toolbar_slider_frame = ctk.CTkFrame(plot_frame, fg_color="#F0F0F0", corner_radius=0)
+    toolbar_slider_frame.pack(side=ctk.BOTTOM, fill=ctk.X)
     
+    toolbar = NavigationToolbar2Tk(canvas_plot, toolbar_slider_frame)
+    toolbar.update()
+    toolbar.pack(side="left")
+    toolbar._message_label.config(width=22)
+    
+    data_slider = ctk.CTkSlider(toolbar_slider_frame, from_=0, to=cord1.shape[0]-1, number_of_steps=cord1.shape[0]-1, width=700, height=20, command=lambda value: plot_updater_slider(value, lines, axs, data_listname, canvas_plot, cut_data, station_range_text, selected_station, selected_secondStation_solution, cord_time, cord1, cord2, sol_df, layer_name))
+    data_slider.set(start_index)
+    data_slider.pack(side="right", expand=True, padx=5)
+
     layers_frame_on = ctk.CTkFrame(layers_frame)
     layers_frame_on.pack(side="bottom", fill=ctk.X)
     layers_label = ctk.CTkLabel(layers_frame_on, text="Layers", font=("Helvetica", 22))
     layers_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 10))
 
-    return layers_frame_on, widget, toolbar_frame
+    return layers_frame_on, widget, toolbar_slider_frame

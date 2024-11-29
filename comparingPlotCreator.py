@@ -102,7 +102,7 @@ def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, cut_d
                 cut_data_merged = pd.concat([cut_data1_full, cut_secondData_full], ignore_index=True).sort_values(by='datetime').reset_index(drop=True)
                 time_data = cut_data_merged.loc[(cut_data_merged['datetime'] >= start_time) & (cut_data_merged['datetime'] <= end_time)]
                 time_data = time_data.copy()
-                colors2 = ["dodgerblue", "pink", "orange"]
+                # colors2 = ["dodgerblue", "pink", "orange"]
 
                 def solution_dataframe(time_data, data_listname, solutions):
                     sol_df = time_data[time_data["Sol"] == solutions[0]].reset_index(drop=True)
@@ -122,14 +122,14 @@ def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, cut_d
                         
                     return sol_df
                 
-                global canvas_widget, toolbar_widget, layers_widget
+                global canvas_widget, toolbar_widget, layers_widget#, start_index
                 canvas_widget = None
                 toolbar_widget = None
                 layers_widget = None
-                
+
                 def plot_position(plot_frame, layers_frame):
                     global canvas_widget, toolbar_widget, layers_widget
-
+                    start_index = 0
                     def layer_buttons_comp(ax, layers_frame_on):
                         def toggle_visibility(name):
                             name.set_visible(not name.get_visible())
@@ -175,85 +175,93 @@ def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, cut_d
 
                     clear_plot()
 
-                    fig, ax = plt.subplots(3, 2, figsize=(13,5))
-
+                    fig, axs = plt.subplots(3, 2, figsize=(13,5))
+                    lines = []
                     for i, layer_name in enumerate(data_listname):
                         if cut_data["Sol"].iloc[0] == cut_secondData["Sol"].iloc[0]:
                             sol_df = solution_dataframe(time_data, data_listname, station_list).reset_index(drop=True)
-                            cord_time = time_data.loc[time_data["Stat"] == selected_station_solution, "datetime"].reset_index(drop=True)
-                            cord1 = time_data.loc[time_data["Stat"] == selected_station_solution, layer_name].reset_index(drop=True)
-                            cord2 = time_data.loc[time_data["Stat"] == selected_secondStation_solution, layer_name].reset_index(drop=True)
+                            cord_time = time_data.loc[time_data["Stat"][start_index:] == selected_station_solution, "datetime"].reset_index(drop=True)
+                            cord1 = time_data.loc[time_data["Stat"][start_index:] == selected_station_solution, layer_name].reset_index(drop=True)
+                            cord2 = time_data.loc[time_data["Stat"][start_index:] == selected_secondStation_solution, layer_name].reset_index(drop=True)
 
                         else:
                             sol_df = solution_dataframe(time_data, data_listname, solutions).reset_index(drop=True)
                             cord_time = time_data.loc[time_data["Sol"] == solutions[0], "datetime"].reset_index(drop=True)
                             cord1 = time_data.loc[time_data["Sol"] == solutions[0], layer_name].reset_index(drop=True)
                             cord2 = time_data.loc[time_data["Sol"] == solutions[1], layer_name].reset_index(drop=True)
-
                         
-                        line, = ax[i, 0].plot(cord_time, cord1, color="purple")
-                        line, = ax[i, 0].plot(cord_time, cord2, color="orange")
-                        line, = ax[i, 1].plot(cord_time, sol_df[layer_name], color=data_colors[i])
-                        ax[i, 0].set_title(layer_name)
-                        ax[i, 0].xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
-                        ax[i, 0].grid(True)
+                        line1 = axs[i, 0].plot(cord_time, cord1, color="purple")
+                        
+                        line2 = axs[i, 0].plot(cord_time, cord2, color="orange")
+                        lines.append((line1, line2))
+                        line, = axs[i, 1].plot(cord_time, sol_df[layer_name], color=data_colors[i])
+                        lines.append(line)
+                        
+                        axs[i, 0].set_title(layer_name)
+                        axs[i, 0].xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
+                        axs[i, 0].grid(True)
 
-                        ax[i, 0].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
-                        ax[i, 0].ticklabel_format(useOffset=False, axis='y', style='plain')
+                        axs[i, 0].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+                        axs[i, 0].ticklabel_format(useOffset=False, axis='y', style='plain')
 
-                        ax[i, 1].set_title(layer_name)
-                        ax[i, 1].xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
-                        ax[i, 1].grid(True)
+                        axs[i, 1].set_title(layer_name)
+                        axs[i, 1].xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
+                        axs[i, 1].grid(True)
 
-                        ax[i, 1].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
-                        ax[i, 1].ticklabel_format(useOffset=False, axis='y', style='plain')
+                        axs[i, 1].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+                        axs[i, 1].ticklabel_format(useOffset=False, axis='y', style='plain')
 
                     extend_time = f"{datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")}  -  {datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")}"
-                    ax[0,0].text(-0.2, 1.4, f"{selected_station_solution} vs {selected_secondStation_solution}      {extend_time}", transform=ax[0,0].transAxes, va='top', ha='left', fontsize=11)
-                    ax[0,0].text(-0.1, 1.2, '{:>11}'.format('[m]'), transform=ax[0,0].transAxes, va='top', ha='left', fontsize=10)
-                    ax[-1,0].set_xlabel(xaxis_label, font="Verdana")
+                    station_range_text = axs[0,0].text(-0.2, 1.4, f"{selected_station_solution} vs {selected_secondStation_solution}      {extend_time}", transform=axs[0,0].transAxes, va='top', ha='left', fontsize=11)
+                    axs[0,0].text(-0.1, 1.2, '{:>11}'.format('[m]'), transform=axs[0,0].transAxes, va='top', ha='left', fontsize=10)
+                    axs[-1,0].set_xlabel(xaxis_label, font="Verdana")
 
                     fig.subplots_adjust(left=0.099,right=0.98, hspace=0.4, wspace=0.2)
                     
-                    layers_widget, canvas_widget, toolbar_widget = plot_frames(fig, plot_frame, layers_frame)
-                    layer_buttons_comp(ax, layers_widget)
-
-
+                    layers_widget, canvas_widget, toolbar_widget = plot_frames(fig, plot_frame, layers_frame, time_data, lines, axs, data_listname, station_range_text, selected_station_solution, selected_secondStation_solution, cord_time, cord1, cord2, sol_df, layer_name)
+                    layer_buttons_comp(axs, layers_widget)
                 
                 def plot_ground(plot_frame, layers_frame):
                     global canvas_widget, toolbar_widget, layers_widget
-                    
+
                     clear_plot()
 
-                    fig, ax = plt.subplots(figsize=(12,5))
-                    
-                    x_ax = time_data.loc[time_data["Sol"] == solutions[0], data_listname[0]]
-                    y_ax = time_data.loc[time_data["Sol"] == solutions[0], data_listname[1]]
-                    x_ax2 = time_data.loc[time_data["Sol"] == solutions[1], data_listname[0]]
-                    y_ax2 = time_data.loc[time_data["Sol"] == solutions[1], data_listname[1]]
-                    median_x = np.nanmedian(x_ax)
-                    median_y = np.nanmedian(y_ax)
-                    ax.grid(True)
+                    fig, axs = plt.subplots(figsize=(12,5))
 
-                    ax.scatter(x_ax, y_ax, color="red", zorder=3, s=10)
-                    ax.scatter(x_ax2, y_ax2, color="green", zorder=4, s=10)
-                    ax.axhline(median_y, color='black', linewidth=1, linestyle='-', zorder=1)
-                    ax.axvline(median_x, color='black', linewidth=1, linestyle='-', zorder=2)
+                    x_axs = time_data.loc[time_data["Sol"] == solutions[0], data_listname[0]]
+                    y_axs = time_data.loc[time_data["Sol"] == solutions[0], data_listname[1]]
+                    x_axs2 = time_data.loc[time_data["Sol"] == solutions[1], data_listname[0]]
+                    y_axs2 = time_data.loc[time_data["Sol"] == solutions[1], data_listname[1]]
+
+                    axs.grid(True)
                     
+                    line1 = axs.scatter(x_axs, y_axs, color="red", zorder=3, s=10)
+                    line2 = axs.scatter(x_axs2, y_axs2, color="green", zorder=4, s=10)
+                    lines = [line1, line2]
+
+                    invisible_line1, = axs.plot(x_axs, y_axs, color='none')
+                    invisible_line2, = axs.plot(x_axs2, y_axs2, color='none')
+                    invisible_lines = [invisible_line1, invisible_line2]
+               
+
+                    extend_time = f"{datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")}  -  {datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")}"
+                    station_range_text = axs.text(-0.12, 1.10, f"{selected_station_solution} vs {selected_secondStation_solution}      {extend_time}", transform=axs.transAxes, va='top', ha='left', fontsize=11)
                     
                     
                     fig.subplots_adjust(hspace=0.4, wspace=0.3)
-                    ax.set_title(selected_data, font="Verdana", fontsize=14, fontweight="light")
+                    axs.set_title(selected_data, font="Verdana", fontsize=14, fontweight="light")
 
                     formatter = ScalarFormatter(useOffset=False, useMathText=False)
                     formatter.set_scientific(False) 
 
-                    ax.xaxis.set_major_formatter(formatter)
-                    ax.yaxis.set_major_formatter(formatter)
+                    axs.xaxis.set_major_formatter(formatter)
+                    axs.yaxis.set_major_formatter(formatter)
 
-                    layers_widget, canvas_widget, toolbar_widget = plot_frames(fig, plot_frame, layers_frame)
+                    data_to_slider = time_data.loc[time_data["Sol"] == solutions[0]]
+                                                                            
+                    layers_widget, canvas_widget, toolbar_widget = plot_frames(fig, plot_frame, layers_frame, time_data, lines, axs, invisible_lines, station_range_text, selected_station_solution, selected_secondStation_solution, data_to_slider, x_axs, y_axs, x_axs2, y_axs2)
                     
-                    layer_buttons(fig, ax, [selected_solution, selected_secondSolution], layers_widget, data_colors=["red", "green"])
+                    layer_buttons(fig, axs, [selected_solution, selected_secondSolution], layers_widget, data_colors=["red", "green"])
 
                 def clear_plot():
                     global canvas_widget, toolbar_widget, layers_widget
@@ -267,7 +275,6 @@ def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, cut_d
                     if layers_widget is not None:
                         layers_widget.destroy()
                         layers_widget = None
-
 
                 
 
