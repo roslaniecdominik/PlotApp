@@ -6,10 +6,15 @@ def defining_data():
                 "RecX": "REC XYZ", 
                 "RecmX": "RECm XYZ", 
                 "mIonDel": "ION",
-                "RecN": "ENU"}
-    single_plot = ["DOP factors", "ION"]
-    triple_plot = ["REC XYZ", "RECm XYZ", "ENU"]
-    return data_dict, single_plot, triple_plot
+                "RecN": "NEU",
+                "RecE": "dNEU",
+                "RecmN": "mNEU",
+                "nG": "SV",
+                "N_L1": "phase"}
+    single_scatter = ["phase"]
+    single_plot = ["DOP factors", "ION", "SV", "mNEU", "RECm XYZ", "dNEU"]
+    triple_plot = ["REC XYZ", "NEU"]
+    return data_dict, single_scatter, single_plot, triple_plot
 
 
 def match_data(data):
@@ -17,6 +22,9 @@ def match_data(data):
         case "DOP factors":
             data_listname = ["PDop", "TDop", "HDop", "VDop", "GDop"]
             data_colors = ["red", "green", "blue", "yellow", "orange"]
+        case "SV":
+            data_listname = ["nG", "nE", "nR", "nC", "nJ", "nGNSS"]
+            data_colors = ["red", "green", "blue", "yellow", "orange", "black"]
         case "REC XYZ":
             data_listname = ["RecX", "RecY", "RecZ"]
             data_colors = ["red", "green", "blue"]
@@ -26,9 +34,18 @@ def match_data(data):
         case "ION":
             data_listname = ["mIonDel"]
             data_colors = ["red"]
-        case "ENU":
+        case "NEU":
             data_listname = ["RecN", "RecE", "RecU"]
             data_colors = ["red", "green", "blue"]
+        case "dNEU":
+            data_listname = ["RecdN", "RecdE", "RecdU"]
+            data_colors = ["red", "green", "blue"]
+        case "mNEU":
+            data_listname = ["RecmN", "RecmE", "RecmU"]
+            data_colors = ["green", "blue", "red"]
+        case "phase":
+            data_listname = ["N_L1", "N_L2", "N_L3", "N_L4", "N_L5", "N_L6", "N_L7", "N_L8"]
+            data_colors = ["black", "grey", "rosybrown", "brown", "tomato", "orange", "olivedrab", "aqua", "dodgerblue"]
     return data_listname, data_colors
 
 def time_column(data):

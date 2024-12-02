@@ -14,7 +14,7 @@ from components.sliderEvent import plot_updater_slider
 from comparingPlotCreator import comparing_window
 
 
-data_dict, single_plot, triple_plot = defining_data()
+data_dict, single_scatter, single_plot, triple_plot = defining_data()
 
 def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, filepaths, station_list, selected_station, data, selected_data, app):
     global loading_check
@@ -31,22 +31,56 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         data_listname, x = match_data(selected_data)
         cut_column = data_listname
         cut_column.insert(0, "datetime")
+        
+        # time_data["nGNSS"] = time_data["nE"] + time_data["nG"]
+        # print(time_data["RecmN"].mean())
+        # print(time_data["RecmN"].std())
+
+        # time_data["RecdN"] = time_data["RecN"] - time_data["RecN"].mean()
+        # time_data["RecdE"] = time_data["RecE"] - time_data["RecE"].mean()
+        # time_data["RecdU"] = time_data["RecU"] - time_data["RecU"].mean()
+        # print(time_data["RecdN"].mean())
 
         cut_data = time_data[cut_column]
         cut_data = cut_data.copy()
         cut_data.loc[:, "Sol"] = solution_generator(selected_station.split("(")[1].split(")")[0])
-
+        # print(cut_data)
+        
         time_diff = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") - datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
 
         xaxis_set, xaxis_label = xaxis_config(time_diff, timedelta)    
         start_index = 0
-        if selected_data in single_plot:
+        if selected_data in single_scatter:
+            def plot():
+                fig, axs = plt.subplots(figsize=(10,6))
+                lines = []
+                plots = {}
+                
+                for layer_name, color in zip(data_listname, data_colors):
+                    plots[layer_name] = axs.scatter(cut_data["datetime"], cut_data[layer_name], color=color, s=0.05, label=layer_name)
+                    lines.append(plots[layer_name])
+                invisible_line1, = axs.plot(cut_data["datetime"], cut_data[layer_name], color='none')
+                invisible_line2, = axs.plot(cut_data["datetime"], cut_data[layer_name], color='none')
+                invisible_lines = [invisible_line1, invisible_line2]
+                axs.set_title(selected_data, font="Verdana", fontsize=14, fontweight="light")
+                axs.set_xlabel(xaxis_label, font="Verdana")
+                axs.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
+                axs.grid(True)
+                axs.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+                axs.ticklabel_format(useOffset=False, axis='y', style='plain')
+                extend_time = f"{datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")}  -  {datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")}"
+                station_range_text = axs.text(-0.12, 1.10, f"{selected_station}, {extend_time}", transform=axs.transAxes, va='top', ha='left', fontsize=11)
+                fig.subplots_adjust(left=0.15)
+                
+                return fig, axs, lines, station_range_text, invisible_lines
+
+        elif selected_data in single_plot:
 
             def plot():
                 fig, axs = plt.subplots(figsize=(10,6))
                 lines = []
                 plots = {}
-
+                
                 for layer_name, color in zip(data_listname, data_colors):
                     plots[layer_name], = axs.plot(cut_data["datetime"], cut_data[layer_name], color=color, linewidth=1, label=layer_name)
                     lines.append(plots[layer_name])
@@ -61,7 +95,9 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 station_range_text = axs.text(-0.12, 1.10, f"{selected_station}, {extend_time}", transform=axs.transAxes, va='top', ha='left', fontsize=11)
                 fig.subplots_adjust(left=0.15)
                 
-                return fig, axs, lines, station_range_text
+                invisible_lines = []
+
+                return fig, axs, lines, station_range_text, invisible_lines
 
         elif selected_data in triple_plot:
             def plot():
@@ -81,14 +117,16 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 station_range_text = axs[0].text(-0.1, 1.5, f"{selected_station}, {extend_time}", transform=axs[0].transAxes, va='top', ha='left', fontsize=11)
                 axs[0].text(-0.1, 1.2, '{:>22}'.format('[m]'), transform=axs[0].transAxes, va='top', ha='left', fontsize=10)
                 axs[-1].set_xlabel(xaxis_label, font="Verdana")
-                fig.subplots_adjust(left=0.01)
+                # fig.sus_adjust(left=0.01)
                 fig.tight_layout()
                 
-                return fig, axs, lines, station_range_text
+                invisible_lines = []
+                
+                return fig, axs, lines, station_range_text, invisible_lines
 
         data_listname, data_colors = match_data(selected_data)
 
-        fig, axs, lines, station_range_text = plot()
+        fig, axs, lines, station_range_text, invisible_lines = plot()
 
         new_window = ctk.CTkToplevel(app)
         new_window.title("PLOT")
@@ -174,6 +212,6 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         toolbar.pack(side="left")
         toolbar._message_label.config(width=22)
         
-        data_slider = ctk.CTkSlider(toolbar_slider_frame, from_=0, to=cut_data.shape[0]-1, number_of_steps=cut_data.shape[0]-1, width=500, height=20, command=lambda value: plot_updater_slider(value, lines, axs, data_listname, canvas_plot, cut_data, station_range_text, selected_station, "", "", "", "", "", ""))
+        data_slider = ctk.CTkSlider(toolbar_slider_frame, from_=0, to=cut_data.shape[0]-1, number_of_steps=cut_data.shape[0]-1, width=500, height=20, command=lambda value: plot_updater_slider(value, lines, axs, data_listname, canvas_plot, cut_data, station_range_text, selected_station, "", invisible_lines, "", "", "", ""))
         data_slider.set(start_index)
         data_slider.pack(side="right", expand=True, padx=5)

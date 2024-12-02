@@ -9,7 +9,7 @@ from components.centerWindow import center_window
 from components.dataConfiguration import merge_data, time_column, defining_data
 from components.frames import minmax_frame, sliders_frame, selected_time
 from plotCreator import create_plot
-from components.sliderEvent import year_slider_event, hour_slider_event, time_updater, plot_updater_slider
+from components.sliderEvent import year_slider_event, hour_slider_event, time_updater
 from components.timeLabelClearing import timeLabelClearing
 from components.solutionGenerator import solution_generator
 
@@ -111,7 +111,7 @@ def read_data(event):
     filepaths_cut = [filepath for filepath in filepaths if selected_station in filepath and selected_solution in filepath]
 
     
-    data_dict, single_plot, triple_plot = defining_data()
+    data_dict, single_scatter, single_plot, triple_plot = defining_data()
 
     various_data = []
     for filepath in filepaths_cut:

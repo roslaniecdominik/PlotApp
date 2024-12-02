@@ -13,7 +13,7 @@ from components.solutionGenerator import solution_generator
 from components.frames import plot_frames
 from components.layerButtons import layer_buttons
 
-data_dict, single_plot, triple_plot = defining_data()
+data_dict, single_scatter, single_plot, triple_plot = defining_data()
 
 
 def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, cut_data, cut_column, selected_station_solution, error_label, 

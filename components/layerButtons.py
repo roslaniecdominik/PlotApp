@@ -7,24 +7,31 @@ def layer_buttons(fig, ax, data_listname, layers_frame, data_colors):
     def toggle_visibility(name):
         name.set_visible(not name.get_visible())
         plt.draw()
-    
+
     for i, layer_name in enumerate(data_listname):
         
         if type(ax) != np.ndarray and any(isinstance(coll, PathCollection) for coll in ax.collections):
             
-            layer_label = ctk.CTkLabel(layers_frame, text=data_listname[i])
-            layer_label.pack(side=ctk.TOP, padx=10, pady=(10,2))
-            layer_frame = ctk.CTkFrame(layers_frame)
-            layer_frame.pack(side=ctk.TOP, pady=(2,5))
-            toggle_button = ctk.CTkCheckBox(layer_frame, text="", width=50, command=lambda line=ax.collections[i]: toggle_visibility(line))
-        
-        elif len(fig.get_axes()) == 1:
+            if any(i in data_listname[0] for i in ["GPS", "GLONASS", "GALILEO", "BeiDou", "IRNSS", "SBAS"]): #ground track
+                layer_label = ctk.CTkLabel(layers_frame, text=data_listname[i])
+                layer_label.pack(side=ctk.TOP, padx=10, pady=(10,2))
+
+                layer_frame = ctk.CTkFrame(layers_frame)
+                layer_frame.pack(side=ctk.TOP, pady=(2,5))
+                
+                toggle_button = ctk.CTkCheckBox(layer_frame, text="", width=50, command=lambda line=ax.collections[i]: toggle_visibility(line))
+            else: #phase
+                layer_frame = ctk.CTkFrame(layers_frame)
+                layer_frame.pack(side=ctk.TOP, pady=(2,5))
+                
+                toggle_button = ctk.CTkCheckBox(layer_frame, text=data_listname[i], width=50, command=lambda line=ax.collections[i]: toggle_visibility(line))
+
+        elif len(fig.get_axes()) == 1: #DOP, mRecXYZ
             layer_frame = ctk.CTkFrame(layers_frame)
             layer_frame.pack(anchor="w", padx=10, pady=5)
+            toggle_button = ctk.CTkCheckBox(layer_frame, text=data_listname[i], command=lambda line=ax.get_lines()[i]: toggle_visibility(line))
 
-            toggle_button = ctk.CTkCheckBox(layer_frame, text=data_listname[0], command=lambda line=ax.get_lines()[i]: toggle_visibility(line))
-
-        else:
+        else: #RecXYZ
             layer_frame = ctk.CTkFrame(layers_frame)
             layer_frame.pack(anchor="w", padx=10, pady=5)
             toggle_button = ctk.CTkCheckBox(layer_frame, text=data_listname[i], command=lambda line=ax[i].get_lines()[0]: toggle_visibility(line))

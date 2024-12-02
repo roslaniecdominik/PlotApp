@@ -1,5 +1,6 @@
 import customtkinter as ctk
 import numpy as np
+from matplotlib.collections import PathCollection
 from datetime import datetime, timedelta
 
 
@@ -200,7 +201,7 @@ def plot_updater_slider(value,  lines, axs, data_listname, canvas_plot, cut_data
             extend_time = f"{str(cut_data.iloc[start_index]['datetime'])}  -  {str(cut_data.iloc[-1]['datetime'])}"
 
             if type(axs) == np.ndarray:
-                if axs.ndim == 1:
+                if axs.ndim == 1: #one column
                     for line, ax, data_column in zip(lines, axs, data_listname):
                         line.set_data(cut_data['datetime'][start_index:], cut_data[data_column][start_index:])
                         ax.relim()
@@ -208,7 +209,7 @@ def plot_updater_slider(value,  lines, axs, data_listname, canvas_plot, cut_data
                     station_range_text.set_text(f"{selected_station}, {extend_time}")
                 if axs.ndim == 2:
                     extend_time = f"{str(cord_time.iloc[start_index])}  -  {str(cord_time.iloc[-1])}"
-                    
+
                     #xy
                     for i, (line1, line2) in enumerate([lines[0], lines[2], lines[4]]):
                         line1[0].set_data(cord_time[start_index:], cord1[start_index:])
@@ -243,10 +244,24 @@ def plot_updater_slider(value,  lines, axs, data_listname, canvas_plot, cut_data
 
                     
                 else:
-                    for line, data_column in zip(lines, data_listname):
-                        line.set_data(cut_data['datetime'][start_index:], cut_data[data_column][start_index:])
-                        axs.relim()
-                        axs.autoscale_view()
+                    if any(isinstance(coll, PathCollection) for coll in axs.collections):
+                        numeric_df = cut_data[start_index:].select_dtypes(include='number')
+                        invisible_data = [0 for _ in range(cut_data[start_index:].shape[0])]
+                        invisible_data[0] = numeric_df.min().min()
+                        invisible_data[-1] = numeric_df.max().max()
+                        
+                        invisible_lines = cord_time
+                        for line, data_column in zip(lines, data_listname):
+                            line.set_offsets(list(zip(cut_data['datetime'][start_index:], cut_data[data_column][start_index:])))
+                            invisible_lines[0].set_data(cut_data['datetime'][start_index:], invisible_data)
+                            invisible_lines[1].set_data(cut_data['datetime'][start_index:], invisible_data)
+                            axs.relim()
+                            axs.autoscale_view()
+                    else:
+                        for line, data_column in zip(lines, data_listname):
+                            line.set_data(cut_data['datetime'][start_index:], cut_data[data_column][start_index:])
+                            axs.relim()
+                            axs.autoscale_view()
                     station_range_text.set_text(f"{selected_station}, {extend_time}")
                 
             canvas_plot.draw()
