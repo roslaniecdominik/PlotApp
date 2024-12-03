@@ -52,23 +52,27 @@ def read_time():
 
     show_plot_button.configure(state="disabled")
 
-    selected_data = data_menu.get()
+    try:
+        selected_data = selected_options
+    except:
+        selected_data = [data_menu.get()]
 
     filepath = []
-    for key, value in data_dict.items():
-        if value == selected_data:
-            for i in filepaths_cut:
-                with open(i, "r") as file:
-                    first_row = file.readline()
-                    if key in first_row:
-                        filepath.append(i)
 
+    for key, value in data_dict.items():
+        for i in selected_data:
+            if value == i:
+                for i in filepaths_cut:
+                    with open(i, "r") as file:
+                        first_row = file.readline()
+                        if key in first_row:
+                            if i not in filepath:
+                                filepath.append(i)
+    
     data = pd.read_csv(filepath[0], sep=';', index_col=False, skipinitialspace=True)
     data = time_column(data)
- 
     data = merge_data(data, selected_data, filepath)
 
-    
     time_range = [datetime.strptime(str(min(data["datetime"])), "%Y-%m-%d %H:%M:%S"), datetime.strptime(str(max(data["datetime"])), "%Y-%m-%d %H:%M:%S")]
 
     time_dif = int((time_range[-1] - time_range[0]).days)
@@ -100,7 +104,7 @@ def read_time_in_thread(event):
     threading.Thread(target=read_time).start()
 
 def read_data(event):
-    global data_dict, loading_check, filepaths_cut, selected_station_solution
+    global data_dict, loading_check, filepaths_cut, selected_station_solution, value_to_add
 
     show_plot_button.configure(state="disabled")
 
@@ -137,7 +141,7 @@ def read_data(event):
     loading_animation()
 
     timeLabelClearing(*time_label_list)
-    buttonState([data_menu])
+    buttonState([data_menu, configure_data_button])
 
 def read_data_in_thread(event):
     global loading_check
@@ -163,6 +167,7 @@ def read_station():
         filename_entry.insert(ctk.END, filepaths[0])
 
     optionmenu_var = ctk.StringVar(value="...")
+
     data_menu.configure(variable=optionmenu_var)
     station_menu.configure(variable=optionmenu_var)
 
@@ -208,7 +213,6 @@ def read_station():
     loading_check = False
     loading_animation()
 
-
 def open_file():
     global filepaths, loading_check
     filepaths = filedialog.askopenfilenames(filetypes=[("Text files", "*.log")])
@@ -241,31 +245,65 @@ station_fullLabel = ctk.CTkLabel(app, text=" ", font=("Helvetica", 12))
 station_fullLabel.pack(side=ctk.TOP)
 
 
-StationData_section = ctk.CTkFrame(app, border_width=0, corner_radius=10, fg_color="transparent")
-StationData_section.pack(side=ctk.TOP, fill=ctk.X, padx=55, pady=(10,20))
+stationData_section = ctk.CTkFrame(app, border_width=0, fg_color="transparent")
+stationData_section.pack(side=ctk.TOP, fill=ctk.X, padx=55, pady=(5,5))
+stationData_section.grid_columnconfigure((0, 1, 2), weight=1)
 
-station_section = ctk.CTkFrame(StationData_section, border_width=0, corner_radius=10, fg_color="transparent")
-station_section.pack(side=ctk.LEFT, fill=ctk.X)
+station_section = ctk.CTkFrame(stationData_section, border_width=0, fg_color="transparent")
+station_section.grid(row=0, column=0, padx=10, sticky="ew")
 
 station_label = ctk.CTkLabel(station_section, text="Select station", font=("Helvetica", 18))
-station_label.pack(side=ctk.LEFT, padx=(0,10))
+station_label.pack(side=ctk.TOP, padx=(0,10))
 
 
 station_menu_fullVAR = ctk.StringVar(station_section)
 station_menu_variable = ctk.StringVar(value="...")
 station_menu = ctk.CTkOptionMenu(station_section, width=150, values=[], variable=station_menu_variable, state="disabled", command=read_data_in_thread)
-station_menu.pack(side=ctk.RIGHT,)
+station_menu.pack(side=ctk.TOP)
 
 
-data_section = ctk.CTkFrame(StationData_section, border_width=0, corner_radius=10, fg_color="transparent")
-data_section.pack(side=ctk.RIGHT, fill=ctk.X)
+data_section = ctk.CTkFrame(stationData_section, border_width=0, fg_color="transparent")
+data_section.grid(row=0, column=1, padx=10, sticky="ew")
 
 data_label = ctk.CTkLabel(data_section, text="Select data", font=("Helvetica", 18))
-data_label.pack(side=ctk.LEFT, padx=(0,10))
+data_label.pack(side=ctk.TOP, padx=(0,10))
 
 data_menu_variable = ctk.StringVar(value="...")
 data_menu = ctk.CTkOptionMenu(data_section, width=150, values=[], variable=data_menu_variable, state="disabled", command=read_time_in_thread)
-data_menu.pack(side=ctk.RIGHT)
+data_menu.pack(side=ctk.TOP)
+
+#-----------------------------
+
+
+def conf_fun():
+    selected = {option: ctk.BooleanVar(value=False) for option in value_to_add}
+    menu_window = ctk.CTkToplevel(app)
+    menu_window.title("Options")
+    menu_height = (len(value_to_add)+1) * 30 + 60
+    menu_window.geometry(f"200x{menu_height}")
+    # menu_window.transient(app)
+
+    for option in value_to_add:
+        checkbox = ctk.CTkCheckBox(menu_window, text=option, variable=selected[option])
+        checkbox.pack(anchor="w", padx=10, pady=5)
+    def save_selection():
+        global selected_options
+        selected_options = [option for option, var in selected.items() if var.get()]
+        read_time_in_thread("")
+        menu_window.destroy()
+    # Przycisk do zamknięcia menu i zapisania wyboru
+    close_button = ctk.CTkButton(menu_window, text="Save", command=save_selection)
+    close_button.pack(pady=10)
+    
+#--------------------------------
+
+configure_data_section = ctk.CTkFrame(stationData_section, border_width=0, corner_radius=10, fg_color="transparent")
+configure_data_section.grid(row=0, column=2, padx=10, sticky="ew")
+
+configure_data_label = ctk.CTkLabel(configure_data_section, text="Configure data", font=("Helvetica", 18))
+configure_data_label.pack(side=ctk.TOP, padx=(0,10))
+configure_data_button = ctk.CTkButton(configure_data_section, text="Configure", state="disabled", command=conf_fun)
+configure_data_button.pack(side=ctk.TOP)
 
 
 # -Min & Max time section-

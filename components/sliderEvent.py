@@ -196,72 +196,86 @@ def hour_slider_event(id, time, date, year_entry1, year_entry2, hour_entry1, hou
         hour_entry1.delete(0, ctk.END)
         hour_entry1.insert(0, selected_date)
 
-def plot_updater_slider(value,  lines, axs, data_listname, canvas_plot, cut_data, station_range_text, selected_station, selected_secondStation_solution, cord_time, cord1, cord2, sol_df, layer_name):
+def plot_updater_slider(value,  lines, axss, data_listnames, canvas_plot, cut_data, station_range_text, selected_station, selected_secondStation_solution, cord_time, cord1, cord2, sol_df, layer_name):
             start_index = int(value)
             extend_time = f"{str(cut_data.iloc[start_index]['datetime'])}  -  {str(cut_data.iloc[-1]['datetime'])}"
+            data_listnames = [el for list in data_listnames for el in list]
+            # print("1: ", axss, data_listnames, lines)
+            # print(axsss[0])
 
-            if type(axs) == np.ndarray:
-                if axs.ndim == 1: #one column
-                    for line, ax, data_column in zip(lines, axs, data_listname):
-                        line.set_data(cut_data['datetime'][start_index:], cut_data[data_column][start_index:])
-                        ax.relim()
-                        ax.autoscale_view()
-                    station_range_text.set_text(f"{selected_station}, {extend_time}")
-                if axs.ndim == 2:
-                    extend_time = f"{str(cord_time.iloc[start_index])}  -  {str(cord_time.iloc[-1])}"
+            for data_listname, line in zip(data_listnames, lines):
+                # print("2: ", data_listname, line)
 
-                    #xy
-                    for i, (line1, line2) in enumerate([lines[0], lines[2], lines[4]]):
-                        line1[0].set_data(cord_time[start_index:], cord1[start_index:])
-                        line2[0].set_data(cord_time[start_index:], cord2[start_index:])
-                        axs[i, 0].relim()
-                        axs[i, 0].autoscale_view()
+                if type(axss) == "s":#np.ndarray:
+                    if axss.ndim == 1: #one column
+                        print(1)
+                        for line, ax, data_column in zip(lines, axss, data_listname):
+                            line.set_data(cut_data['datetime'][start_index:], cut_data[data_column][start_index:])
+                            ax.relim()
+                            ax.autoscale_view()
+                        station_range_text.set_text(f"{selected_station}, {extend_time}")
+                    if axss.ndim == 2:
+                        print(2)
+                        extend_time = f"{str(cord_time.iloc[start_index])}  -  {str(cord_time.iloc[-1])}"
+
+                        #xy
+                        for i, (line1, line2) in enumerate([lines[0], lines[2], lines[4]]):
+                            line1[0].set_data(cord_time[start_index:], cord1[start_index:])
+                            line2[0].set_data(cord_time[start_index:], cord2[start_index:])
+                            axss[i, 0].relim()
+                            axss[i, 0].autoscale_view()
+                            station_range_text.set_text(f"{selected_station} vs {selected_secondStation_solution}      {extend_time}")
+
+                        #compare
+                        for i, line in enumerate([lines[1], lines[3], lines[5]], start=3):
+                            line.set_data(cord_time[start_index:], sol_df[layer_name][start_index:],)
+                            axss[i - 3, 1].relim()
+                            axss[i - 3, 1].autoscale_view()
+                        
+                else:
+                    if selected_secondStation_solution != "":
+                        print(3)
+                        invisible_lines = data_listname
+
+                        extend_time = f"{str(cord_time.iloc[start_index]["datetime"])} - {str(cord_time.iloc[-1]["datetime"])}"
+                        x_axss = cord1
+                        y_axss = cord2
+                        x_axss2 = sol_df
+                        y_axss2 = layer_name
+
+                        lines[0].set_offsets(list(zip(x_axss[start_index:], y_axss[start_index:])))
+                        lines[1].set_offsets(list(zip(x_axss2[start_index:], y_axss2[start_index:])))
+                        invisible_lines[0].set_data(x_axss[start_index:], y_axss[start_index:])
+                        invisible_lines[1].set_data(x_axss2[start_index:], y_axss2[start_index:])
+                        axss.relim()
+                        axss.autoscale_view()
                         station_range_text.set_text(f"{selected_station} vs {selected_secondStation_solution}      {extend_time}")
 
-                    #compare
-                    for i, line in enumerate([lines[1], lines[3], lines[5]], start=3):
-                        line.set_data(cord_time[start_index:], sol_df[layer_name][start_index:],)
-                        axs[i - 3, 1].relim()
-                        axs[i - 3, 1].autoscale_view()
-                    
-            else:
-                if selected_secondStation_solution != "":
-                    invisible_lines = data_listname
-
-                    extend_time = f"{str(cord_time.iloc[start_index]["datetime"])} - {str(cord_time.iloc[-1]["datetime"])}"
-                    x_axs = cord1
-                    y_axs = cord2
-                    x_axs2 = sol_df
-                    y_axs2 = layer_name
-
-                    lines[0].set_offsets(list(zip(x_axs[start_index:], y_axs[start_index:])))
-                    lines[1].set_offsets(list(zip(x_axs2[start_index:], y_axs2[start_index:])))
-                    invisible_lines[0].set_data(x_axs[start_index:], y_axs[start_index:])
-                    invisible_lines[1].set_data(x_axs2[start_index:], y_axs2[start_index:])
-                    axs.relim()
-                    axs.autoscale_view()
-                    station_range_text.set_text(f"{selected_station} vs {selected_secondStation_solution}      {extend_time}")
-
-                    
-                else:
-                    if any(isinstance(coll, PathCollection) for coll in axs.collections):
-                        numeric_df = cut_data[start_index:].select_dtypes(include='number')
-                        invisible_data = [0 for _ in range(cut_data[start_index:].shape[0])]
-                        invisible_data[0] = numeric_df.min().min()
-                        invisible_data[-1] = numeric_df.max().max()
                         
-                        invisible_lines = cord_time
-                        for line, data_column in zip(lines, data_listname):
-                            line.set_offsets(list(zip(cut_data['datetime'][start_index:], cut_data[data_column][start_index:])))
-                            invisible_lines[0].set_data(cut_data['datetime'][start_index:], invisible_data)
-                            invisible_lines[1].set_data(cut_data['datetime'][start_index:], invisible_data)
-                            axs.relim()
-                            axs.autoscale_view()
                     else:
-                        for line, data_column in zip(lines, data_listname):
-                            line.set_data(cut_data['datetime'][start_index:], cut_data[data_column][start_index:])
-                            axs.relim()
-                            axs.autoscale_view()
-                    station_range_text.set_text(f"{selected_station}, {extend_time}")
-                
+                        print(4)
+                        # print(axss)
+                        # print(axss.colletions)
+                        
+                        if any(isinstance(coll, PathCollection) for coll in axss[0].collections):
+                            numeric_df = cut_data[start_index:].select_dtypes(include='number')
+                            invisible_data = [0 for _ in range(cut_data[start_index:].shape[0])]
+                            invisible_data[0] = numeric_df.min().min()
+                            invisible_data[-1] = numeric_df.max().max()
+                            
+                            invisible_lines = cord_time
+                            for line, data_column in zip(lines, data_listname):
+                                line.set_offsets(list(zip(cut_data['datetime'][start_index:], cut_data[data_column][start_index:])))
+                                invisible_lines[0].set_data(cut_data['datetime'][start_index:], invisible_data)
+                                invisible_lines[1].set_data(cut_data['datetime'][start_index:], invisible_data)
+                                axss.relim()
+                                axss.autoscale_view()
+                        else:
+                            # wszystkie single liniowe, działa pojedyńczy triple, działa podwójny triple, działa mix triple z single
+                            line.set_data(cut_data['datetime'][start_index:], cut_data[data_listname][start_index:])
+                            for axs in axss:
+                                axs.relim()
+                                axs.autoscale_view()
+                        station_range_text.set_text(f"{selected_station}, {extend_time}")
+
             canvas_plot.draw()

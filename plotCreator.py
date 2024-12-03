@@ -5,18 +5,19 @@ from tkinter import messagebox
 from matplotlib.ticker import ScalarFormatter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
-from components.dataConfiguration import match_data, defining_data
+from components.dataConfiguration import match_data, defining_data, data_filtering, triple_plot_corrections
 from components.centerWindow import center_window
 from components.solutionGenerator import solution_generator
 from components.layerButtons import layer_buttons
 from components.xaxisLabel import xaxis_config
 from components.sliderEvent import plot_updater_slider
 from comparingPlotCreator import comparing_window
+from components.calculateNewColumns import calculate_new_columns
 
 
 data_dict, single_scatter, single_plot, triple_plot = defining_data()
 
-def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, filepaths, station_list, selected_station, data, selected_data, app):
+def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, filepaths, station_list, selected_station, data, selected_datas, app):
     global loading_check
     
     
@@ -27,42 +28,90 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         messagebox.showinfo("Message", "Starting time must be less than end time")
 
     else:
-        time_data = data.loc[(data['datetime'] >= start_time) & (data['datetime'] <= end_time)]
-        data_listname, x = match_data(selected_data)
-        cut_column = data_listname
-        cut_column.insert(0, "datetime")
-        
-        # time_data["nGNSS"] = time_data["nE"] + time_data["nG"]
-        # print(time_data["RecmN"].mean())
-        # print(time_data["RecmN"].std())
+        import pandas as pd
+        pd.set_option('display.max_columns', None)  # Wyświetlanie wszystkich kolumn
+        pd.set_option('display.width', None)
 
-        # time_data["RecdN"] = time_data["RecN"] - time_data["RecN"].mean()
-        # time_data["RecdE"] = time_data["RecE"] - time_data["RecE"].mean()
-        # time_data["RecdU"] = time_data["RecU"] - time_data["RecU"].mean()
-        # print(time_data["RecdN"].mean())
+        data_listnames, data_colors = match_data(selected_datas)
+        data = calculate_new_columns(data, selected_datas)
+        data, data_listnames, data_colors = data_filtering(data, data_listnames, data_colors)
+
+        time_data = data.loc[(data['datetime'] >= start_time) & (data['datetime'] <= end_time)]
+
+        cut_column = []
+        [cut_column.extend(i) for i in data_listnames]
+        cut_column.insert(0, "datetime")
 
         cut_data = time_data[cut_column]
         cut_data = cut_data.copy()
         cut_data.loc[:, "Sol"] = solution_generator(selected_station.split("(")[1].split(")")[0])
-        # print(cut_data)
         
         time_diff = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") - datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
 
         xaxis_set, xaxis_label = xaxis_config(time_diff, timedelta)    
         start_index = 0
-        if selected_data in single_scatter:
-            def plot():
+
+        if len(selected_datas) > 0:
+
+            def plot(data_listnames, data_colors, selected_datas):
+                common = [el for el in selected_datas if el in triple_plot] 
+                const = 2 * len(common)
+                fig, axs = plt.subplots((len(selected_datas) + const), 1, figsize=(10,6))
+                lines = []
+                plots = {}
+
+                if len(selected_datas) == 1:
+                    if selected_datas in single_plot:
+                        axs = [axs]
+                
+                data_listnames, data_colors, selected_datas = triple_plot_corrections(data_listnames, data_colors, selected_datas, triple_plot)
+                
+                
+                i=0
+                for data_listname, data_color, ax in zip(data_listnames, data_colors, axs): 
+
+                    if selected_datas[i] in single_plot or selected_datas[i] in triple_plot:
+                        for layer_name, color in zip(data_listname, data_color):
+                            line, = ax.plot(cut_data["datetime"], cut_data[layer_name], color=color, linewidth=1, label=layer_name)
+                            lines.append(line,)
+                        invisible_lines = []
+
+                    if selected_datas[i] in single_scatter:
+                        for layer_name, color in zip(data_listname, data_color):
+                            plots[layer_name] = ax.scatter(cut_data["datetime"], cut_data[layer_name], color=color, s=0.05, label=layer_name)
+                        invisible_line1, = ax.plot(cut_data["datetime"], cut_data[layer_name], color='none')
+                        invisible_line2, = ax.plot(cut_data["datetime"], cut_data[layer_name], color='none')
+                        invisible_lines = [invisible_line1, invisible_line2]
+                    
+                    ax.legend(loc='upper left', bbox_to_anchor=(1.05, 0.7), borderaxespad=-3)
+                    ax.set_title(selected_datas[i])
+                    ax.grid(True)
+                    ax.xaxis.set_tick_params(labelbottom=False)
+                    ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+                    ax.ticklabel_format(useOffset=False, axis='y', style='plain')
+                    i += 1
+
+                axs[-1].xaxis.set_tick_params(labelbottom=True)
+                axs[-1].xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
+                extend_time = f"{datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")}  -  {datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")}"
+                station_range_text = axs[0].text(-0.12, 1.35, f"{selected_station}, {extend_time}", transform=axs[0].transAxes, va='top', ha='left', fontsize=11)
+                
+                return fig, axs, lines, station_range_text, invisible_lines, data_listnames, data_colors, selected_datas
+        
+        #-----------------
+        elif selected_datas in single_scatter:
+            def plot(data_listnames):
                 fig, axs = plt.subplots(figsize=(10,6))
                 lines = []
                 plots = {}
                 
-                for layer_name, color in zip(data_listname, data_colors):
+                for layer_name, color in zip(data_listnames, data_colors):
                     plots[layer_name] = axs.scatter(cut_data["datetime"], cut_data[layer_name], color=color, s=0.05, label=layer_name)
                     lines.append(plots[layer_name])
                 invisible_line1, = axs.plot(cut_data["datetime"], cut_data[layer_name], color='none')
                 invisible_line2, = axs.plot(cut_data["datetime"], cut_data[layer_name], color='none')
                 invisible_lines = [invisible_line1, invisible_line2]
-                axs.set_title(selected_data, font="Verdana", fontsize=14, fontweight="light")
+                axs.set_title(selected_datas, font="Verdana", fontsize=14, fontweight="light")
                 axs.set_xlabel(xaxis_label, font="Verdana")
                 axs.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
                 axs.grid(True)
@@ -74,18 +123,18 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 
                 return fig, axs, lines, station_range_text, invisible_lines
 
-        elif selected_data in single_plot:
+        elif selected_datas in single_plot:
 
-            def plot():
+            def plot(data_listnames):
                 fig, axs = plt.subplots(figsize=(10,6))
                 lines = []
                 plots = {}
                 
-                for layer_name, color in zip(data_listname, data_colors):
+                for layer_name, color in zip(data_listnames, data_colors):
                     plots[layer_name], = axs.plot(cut_data["datetime"], cut_data[layer_name], color=color, linewidth=1, label=layer_name)
                     lines.append(plots[layer_name])
 
-                axs.set_title(selected_data, font="Verdana", fontsize=14, fontweight="light")
+                axs.set_title(selected_datas, font="Verdana", fontsize=14, fontweight="light")
                 axs.set_xlabel(xaxis_label, font="Verdana")
                 axs.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
                 axs.grid(True)
@@ -99,11 +148,11 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
 
                 return fig, axs, lines, station_range_text, invisible_lines
 
-        elif selected_data in triple_plot:
-            def plot():
+        elif selected_datas in triple_plot:
+            def plot(data_listnames):
                 fig, axs = plt.subplots(3, 1, figsize=(10,6))
                 lines = []
-                for i, layer_name in enumerate(data_listname):
+                for i, layer_name in enumerate(data_listnames):
 
                     line, = axs[i].plot(cut_data["datetime"][start_index:], cut_data[layer_name][start_index:], color=data_colors[i], linewidth=1, label=layer_name)
                     axs[i].set_title(layer_name)
@@ -111,6 +160,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                     axs[i].grid(True)
                     axs[i].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
                     axs[i].ticklabel_format(useOffset=False, axis='y', style='plain')
+                    
                     lines.append(line)
 
                 extend_time = f"{datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")}  -  {datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")}"
@@ -124,9 +174,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 
                 return fig, axs, lines, station_range_text, invisible_lines
 
-        data_listname, data_colors = match_data(selected_data)
-
-        fig, axs, lines, station_range_text, invisible_lines = plot()
+        fig, axs, lines, station_range_text, invisible_lines, data_listnames, data_colors, selected_datas = plot(data_listnames, data_colors, selected_datas)
 
         new_window = ctk.CTkToplevel(app)
         new_window.title("PLOT")
@@ -145,9 +193,16 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         right_frame.pack(side=ctk.RIGHT, fill=ctk.Y)
         
         layers_label = ctk.CTkLabel(right_frame, text="Layers", font=("Helvetica", 22))
-        layers_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 50))
+        layers_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 10))
 
-        layer_buttons(fig, axs, data_listname, right_frame, data_colors)
+        if sum(len(sublist) for sublist in data_listnames) > 10:
+            scrollable_frame = ctk.CTkScrollableFrame(right_frame, width=180, height=350)
+            scrollable_frame.pack(padx=20, fill="both", expand=True)
+            layer_buttons(fig, axs, data_listnames, scrollable_frame, data_colors)
+        else:
+            layer_buttons(fig, axs, data_listnames, right_frame, data_colors)
+
+        
 
         
         if selected_station in station_list:
@@ -156,7 +211,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
 
 
         secondStation_label = ctk.CTkLabel(right_frame, text="Compare data \nwith another solution", font=("Helvetica", 16))
-        secondStation_label.pack(side=ctk.TOP, fill=ctk.X, pady=(50, 20))
+        secondStation_label.pack(side=ctk.TOP, fill=ctk.X, pady=(30, 20))
         
         def shorten_label(event):
             def shorten_label(text, max_length=14):
@@ -177,7 +232,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
             comparing_window(
                 secondStation_menu_fullVar,
                 filepaths,
-                selected_data,
+                selected_datas,
                 cut_data,
                 cut_column,
                 selected_station,
@@ -192,7 +247,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
 
         compare_button = ctk.CTkButton(right_frame, text="Compare", command=comparing_window_fun)
 
-        if selected_data in single_plot:
+        if selected_datas in single_plot:
             compare_button.configure(state="disabled")
             
         compare_button.pack(side=ctk.TOP)
@@ -212,6 +267,6 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         toolbar.pack(side="left")
         toolbar._message_label.config(width=22)
         
-        data_slider = ctk.CTkSlider(toolbar_slider_frame, from_=0, to=cut_data.shape[0]-1, number_of_steps=cut_data.shape[0]-1, width=500, height=20, command=lambda value: plot_updater_slider(value, lines, axs, data_listname, canvas_plot, cut_data, station_range_text, selected_station, "", invisible_lines, "", "", "", ""))
+        data_slider = ctk.CTkSlider(toolbar_slider_frame, from_=0, to=cut_data.shape[0]-1, number_of_steps=cut_data.shape[0]-1, width=500, height=20, command=lambda value: plot_updater_slider(value, lines, axs, data_listnames, canvas_plot, cut_data, station_range_text, selected_station, "", invisible_lines, "", "", "", ""))
         data_slider.set(start_index)
         data_slider.pack(side="right", expand=True, padx=5)
