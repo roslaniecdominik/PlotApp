@@ -200,22 +200,22 @@ def plot_updater_slider(value,  lines, axss, data_listnames, canvas_plot, cut_da
             start_index = int(value)
             extend_time = f"{str(cut_data.iloc[start_index]['datetime'])}  -  {str(cut_data.iloc[-1]['datetime'])}"
             data_listnames = [el for list in data_listnames for el in list]
-            # print("1: ", axss, data_listnames, lines)
-            # print(axsss[0])
-
+            
+            numeric_df = cut_data[start_index:].select_dtypes(include='number')
+            invisible_data = [0 for _ in range(cut_data[start_index:].shape[0])]
+            invisible_data[0] = numeric_df.min().min()
+            invisible_data[-1] = numeric_df.max().max()
+            invisible_lines = cord_time
+            
             for data_listname, line in zip(data_listnames, lines):
-                # print("2: ", data_listname, line)
-
                 if type(axss) == "s":#np.ndarray:
                     if axss.ndim == 1: #one column
-                        print(1)
                         for line, ax, data_column in zip(lines, axss, data_listname):
                             line.set_data(cut_data['datetime'][start_index:], cut_data[data_column][start_index:])
                             ax.relim()
                             ax.autoscale_view()
                         station_range_text.set_text(f"{selected_station}, {extend_time}")
                     if axss.ndim == 2:
-                        print(2)
                         extend_time = f"{str(cord_time.iloc[start_index])}  -  {str(cord_time.iloc[-1])}"
 
                         #xy
@@ -234,7 +234,6 @@ def plot_updater_slider(value,  lines, axss, data_listnames, canvas_plot, cut_da
                         
                 else:
                     if selected_secondStation_solution != "":
-                        print(3)
                         invisible_lines = data_listname
 
                         extend_time = f"{str(cord_time.iloc[start_index]["datetime"])} - {str(cord_time.iloc[-1]["datetime"])}"
@@ -253,24 +252,34 @@ def plot_updater_slider(value,  lines, axss, data_listnames, canvas_plot, cut_da
 
                         
                     else:
-                        print(4)
-                        # print(axss)
-                        # print(axss.colletions)
                         
-                        if any(isinstance(coll, PathCollection) for coll in axss[0].collections):
-                            numeric_df = cut_data[start_index:].select_dtypes(include='number')
-                            invisible_data = [0 for _ in range(cut_data[start_index:].shape[0])]
-                            invisible_data[0] = numeric_df.min().min()
-                            invisible_data[-1] = numeric_df.max().max()
+                        # if any(isinstance(coll, PathCollection) for coll in axss.collections): #ground track if kropkowy
+                        #     numeric_df = cut_data[start_index:].select_dtypes(include='number')
+                        #     invisible_data = [0 for _ in range(cut_data[start_index:].shape[0])]
+                        #     invisible_data[0] = numeric_df.min().min()
+                        #     invisible_data[-1] = numeric_df.max().max()
                             
-                            invisible_lines = cord_time
-                            for line, data_column in zip(lines, data_listname):
-                                line.set_offsets(list(zip(cut_data['datetime'][start_index:], cut_data[data_column][start_index:])))
-                                invisible_lines[0].set_data(cut_data['datetime'][start_index:], invisible_data)
-                                invisible_lines[1].set_data(cut_data['datetime'][start_index:], invisible_data)
-                                axss.relim()
-                                axss.autoscale_view()
-                        else:
+                        #     invisible_lines = cord_time
+                        #     for line, data_column in zip(lines, data_listname):
+                        #         line.set_offsets(list(zip(cut_data['datetime'][start_index:], cut_data[data_column][start_index:])))
+                        #         invisible_lines[0].set_data(cut_data['datetime'][start_index:], invisible_data)
+                        #         invisible_lines[1].set_data(cut_data['datetime'][start_index:], invisible_data)
+                        #         axss.relim()
+                        #         axss.autoscale_view()
+                        # if any(isinstance(coll, PathCollection) for coll in axss[0].collections): #phase
+                        import matplotlib.pyplot as plt
+                        if isinstance(line, PathCollection):
+                            
+
+                            line.set_offsets(list(zip(cut_data['datetime'][start_index:], cut_data[data_listname][start_index:])))
+                            invisible_lines[0].set_data(cut_data['datetime'][start_index:], invisible_data)
+                            invisible_lines[1].set_data(cut_data['datetime'][start_index:], invisible_data)
+                            
+                            for axs in axss:
+                                axs.relim()
+                                axs.autoscale_view()
+
+                        elif isinstance(line, plt.Line2D):
                             # wszystkie single liniowe, działa pojedyńczy triple, działa podwójny triple, działa mix triple z single
                             line.set_data(cut_data['datetime'][start_index:], cut_data[data_listname][start_index:])
                             for axs in axss:

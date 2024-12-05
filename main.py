@@ -12,6 +12,7 @@ from plotCreator import create_plot
 from components.sliderEvent import year_slider_event, hour_slider_event, time_updater
 from components.timeLabelClearing import timeLabelClearing
 from components.solutionGenerator import solution_generator
+from components.calculateNewColumns import calculate_new_columns
 
 data_dict = defining_data()
 color_index = 0
@@ -48,7 +49,7 @@ def create_plot_handler():
     create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, filepaths, station_list, selected_station_solution, data, selected_data, app)
 
 def read_time():
-    global data, selected_data, filepath, loading_check, time_range, time_dif
+    global data, selected_data, filepath, loading_check, time_range, time_dif, selected_solution
 
     show_plot_button.configure(state="disabled")
 
@@ -70,8 +71,11 @@ def read_time():
                                 filepath.append(i)
     
     data = pd.read_csv(filepath[0], sep=';', index_col=False, skipinitialspace=True)
+    
     data = time_column(data)
-    data = merge_data(data, selected_data, filepath)
+    data = calculate_new_columns(data, selected_data)
+    data = merge_data(data, selected_data, filepath, selected_solution)
+
 
     time_range = [datetime.strptime(str(min(data["datetime"])), "%Y-%m-%d %H:%M:%S"), datetime.strptime(str(max(data["datetime"])), "%Y-%m-%d %H:%M:%S")]
 
@@ -104,14 +108,14 @@ def read_time_in_thread(event):
     threading.Thread(target=read_time).start()
 
 def read_data(event):
-    global data_dict, loading_check, filepaths_cut, selected_station_solution, value_to_add
+    global data_dict, loading_check, filepaths_cut, selected_station_solution, value_to_add, selected_solution
 
     show_plot_button.configure(state="disabled")
 
     selected_station_solution = station_menu_fullVAR.get()
     selected_station = selected_station_solution.split(" ")[0]
     selected_solution = solution_generator(selected_station_solution.split("(")[1].split(")")[0])
-
+    
     filepaths_cut = [filepath for filepath in filepaths if selected_station in filepath and selected_solution in filepath]
 
     

@@ -1,5 +1,7 @@
 import customtkinter as ctk
 import matplotlib.pyplot as plt
+import numpy as np
+                
 from datetime import datetime, timedelta
 from tkinter import messagebox
 from matplotlib.ticker import ScalarFormatter
@@ -31,21 +33,22 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         import pandas as pd
         pd.set_option('display.max_columns', None)  # Wyświetlanie wszystkich kolumn
         pd.set_option('display.width', None)
+        # data.to_csv('output.txt', sep='\t', index=False)
 
         data_listnames, data_colors = match_data(selected_datas)
-        data = calculate_new_columns(data, selected_datas)
+        
         data, data_listnames, data_colors = data_filtering(data, data_listnames, data_colors)
 
         time_data = data.loc[(data['datetime'] >= start_time) & (data['datetime'] <= end_time)]
-
-        cut_column = []
-        [cut_column.extend(i) for i in data_listnames]
-        cut_column.insert(0, "datetime")
-
-        cut_data = time_data[cut_column]
-        cut_data = cut_data.copy()
-        cut_data.loc[:, "Sol"] = solution_generator(selected_station.split("(")[1].split(")")[0])
         
+        # cut_column = []
+        # [cut_column.extend(i) for i in data_listnames]
+        # cut_column.insert(0, "datetime")
+        
+        # cut_data = time_data[cut_column] # cut column zrobic w match data
+        # cut_data = cut_data.copy()
+        # cut_data.loc[:, "Sol"] = solution_generator(selected_station.split("(")[1].split(")")[0])
+        cut_data = data
         time_diff = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") - datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
 
         xaxis_set, xaxis_label = xaxis_config(time_diff, timedelta)    
@@ -58,7 +61,8 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 const = 2 * len(common)
                 fig, axs = plt.subplots((len(selected_datas) + const), 1, figsize=(10,6))
                 lines = []
-                plots = {}
+                scatters = {}
+                scatters_test =[]
 
                 if len(selected_datas) == 1:
                     if selected_datas in single_plot:
@@ -66,7 +70,8 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 
                 data_listnames, data_colors, selected_datas = triple_plot_corrections(data_listnames, data_colors, selected_datas, triple_plot)
                 
-                
+                axs = [axs] if not isinstance(axs, np.ndarray) else axs
+
                 i=0
                 for data_listname, data_color, ax in zip(data_listnames, data_colors, axs): 
 
@@ -74,15 +79,18 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                         for layer_name, color in zip(data_listname, data_color):
                             line, = ax.plot(cut_data["datetime"], cut_data[layer_name], color=color, linewidth=1, label=layer_name)
                             lines.append(line,)
-                        invisible_lines = []
+                        
 
-                    if selected_datas[i] in single_scatter:
+                    elif selected_datas[i] in single_scatter:
+                        
                         for layer_name, color in zip(data_listname, data_color):
-                            plots[layer_name] = ax.scatter(cut_data["datetime"], cut_data[layer_name], color=color, s=0.05, label=layer_name)
+                            scatter = ax.scatter(cut_data["datetime"], cut_data[layer_name], color=color, s=0.05, label=layer_name)
+                            lines.append(scatter)
+                        
                         invisible_line1, = ax.plot(cut_data["datetime"], cut_data[layer_name], color='none')
                         invisible_line2, = ax.plot(cut_data["datetime"], cut_data[layer_name], color='none')
                         invisible_lines = [invisible_line1, invisible_line2]
-                    
+                        
                     ax.legend(loc='upper left', bbox_to_anchor=(1.05, 0.7), borderaxespad=-3)
                     ax.set_title(selected_datas[i])
                     ax.grid(True)
@@ -96,7 +104,12 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 extend_time = f"{datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")}  -  {datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")}"
                 station_range_text = axs[0].text(-0.12, 1.35, f"{selected_station}, {extend_time}", transform=axs[0].transAxes, va='top', ha='left', fontsize=11)
                 
-                return fig, axs, lines, station_range_text, invisible_lines, data_listnames, data_colors, selected_datas
+                try:
+                    invisible_lines
+                except:
+                    invisible_lines = []
+
+                return fig, axs, lines, station_range_text, scatters_test, invisible_lines, data_listnames, data_colors, selected_datas
         
         #-----------------
         elif selected_datas in single_scatter:
@@ -174,8 +187,8 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 
                 return fig, axs, lines, station_range_text, invisible_lines
 
-        fig, axs, lines, station_range_text, invisible_lines, data_listnames, data_colors, selected_datas = plot(data_listnames, data_colors, selected_datas)
-
+        fig, axs, lines, station_range_text, scatters, invisible_lines, data_listnames, data_colors, selected_datas = plot(data_listnames, data_colors, selected_datas)
+        
         new_window = ctk.CTkToplevel(app)
         new_window.title("PLOT")
 
@@ -234,7 +247,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 filepaths,
                 selected_datas,
                 cut_data,
-                cut_column,
+                # cut_column,
                 selected_station,
                 error_label,
                 start_time,

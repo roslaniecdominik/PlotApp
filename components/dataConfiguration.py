@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 
+
 def defining_data():
     
     data_dict = {"PDop": "DOP factors", 
@@ -79,39 +80,84 @@ def time_column(data):
         data = data.drop('ss', axis=1)
         return data
 
-def merge_data(data, selected_data, filepath):
-    data_listnames, x = match_data(selected_data)
+def merge_data(data, selected_data, filepath, selected_station):
+    data_listnames, _ = match_data(selected_data)
 
-    for data_listname in data_listnames:
-        if len(filepath) > 2:
-            data_to_merge = data
-            data_listname.append("datetime")
-            data_to_merge = data_to_merge[data_listname]
-            for i in range(len(filepath)-1):
-                if i < (len(filepath)-1): 
-                    data = pd.read_csv(filepath[i+1], sep=';', index_col=False, skipinitialspace=True)
-                    data = time_column(data)
-                    data = data[data_listname]
-                    merged = pd.concat([data_to_merge, data])
-                    data_to_merge = merged
-            data = merged
+    def cuting_columns(dataframe, data_listname):
+        cut_column = []
+        [cut_column.extend(i) for i in data_listname]
+        cut_column.insert(0, "datetime")
 
+        cut_data = dataframe[cut_column]
+        cut_data = cut_data.copy()
+        cut_data.loc[:, "Sol"] = selected_station
+        return cut_data
+    
+    existing_columns = [col for col in data_listnames if all(c in data.columns for c in col)]
+    missing_columns = [col for col in data_listnames if not all(c in data.columns for c in col)]
 
-        elif len(filepath) == 2:
-            data_last = pd.read_csv(filepath[-1], sep=';', index_col=False, skipinitialspace=True)
-            data_last = time_column(data_last)
-            merged = pd.concat([data_last, data])
+    data = cuting_columns(data, existing_columns) #if data in single plot?
+
+    print(data)
+
+    if len(filepath) == 2: #2 bo narazie zdefiniowane ploty opierają się o maks 2 pliki
+        data_last = pd.read_csv(filepath[-1], sep=';', index_col=False, skipinitialspace=True)
+        data_last = time_column(data_last)
         
-            data = merged
+        if (data_last['datetime'].dt.date == data['datetime'].median()).any:
+            data_last = cuting_columns(data_last, existing_columns)
+            print(data_last)
+            data = pd.concat([data, data_last], ignore_index=True)
+        elif len(missing_columns) != 0:
+            print("?")
+            data_last = cuting_columns(data_last, missing_columns)
+            data = pd.merge(data_last, data, on='datetime', how='outer')
+        elif len(existing_columns) != 0:
+            print("??")
+            data_last = cuting_columns(data_last, existing_columns)
+            data = pd.merge(data_last, data, on='datetime', how='outer')
+    print(data)
+
+    # for data_listname in data_listnames[1:]:
+    #     print(":)")
+    #     if len(filepath) > 2:
+    #         print("???")
+    #         data_to_merge = data
+    #         data_listname.append("datetime")
+    #         data_to_merge = data_to_merge[data_listname]
+    #         for i in range(len(filepath)-1):
+    #             if i < (len(filepath)-1): 
+    #                 data = pd.read_csv(filepath[i+1], sep=';', index_col=False, skipinitialspace=True)
+    #                 data = time_column(data)
+    #                 data = data[data_listname]
+    #                 merged = pd.concat([data_to_merge, data])
+    #                 data_to_merge = merged
+    #         data = merged
+
+
+    #     elif len(filepath) == 2: #dodać wyjątek że z tego samego dnia plik
+    #         data_last = pd.read_csv(filepath[-1], sep=';', index_col=False, skipinitialspace=True)
+    #         data_last = time_column(data_last)
+    #         data_last = cuting_columns(data_last, missing_columns)
+    #         data = pd.merge(data_last, data, on='datetime', how='outer')
+    # print(data)
     return data
 
 def data_filtering(data, data_listnames, data_colors):
     # print(data)
-    # print(data_listnames)
     for j in range(len(data_listnames)):
+
+        # index_to_del = []
+        # for i, col in enumerate(list[j]):  # Iteracja po indeksach i kolumnach
+        #     # Sprawdzenie, czy wszystkie wartości w kolumnie są 0 lub NaN
+        #     print(data)
+        #     if (data[col].replace(0, np.nan).isna()).all():
+        #         index_to_del.append(i)  # Dodanie indeksu do listy
+
+
         index_to_del = [i for i, col in enumerate(data_listnames[j]) if data[col].replace(0, np.nan).isna().all()]
         columns_to_del = [data_listnames[j][i] for i in index_to_del]
-        print(columns_to_del)
+
         data = data.drop(columns=columns_to_del)
         
         for i in sorted(index_to_del, reverse=True): del data_listnames[j][i]
