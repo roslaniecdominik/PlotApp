@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 
+from components.calculateNewColumns import calculate_new_columns
+
 
 def defining_data():
     
@@ -61,6 +63,7 @@ def match_data(data):
                 data_colors.append(["green", "blue", "red", "black", "orange", "aqua"])
     return data_listname, data_colors
 
+
 def time_column(data):
         # Removing empty characters
         data.columns = data.columns.str.strip() 
@@ -80,6 +83,7 @@ def time_column(data):
         data = data.drop('ss', axis=1)
         return data
 
+
 def merge_data(data, selected_data, filepath, selected_station):
     data_listnames, _ = match_data(selected_data)
 
@@ -92,68 +96,53 @@ def merge_data(data, selected_data, filepath, selected_station):
         cut_data = cut_data.copy()
         cut_data.loc[:, "Sol"] = selected_station
         return cut_data
-    
+
     existing_columns = [col for col in data_listnames if all(c in data.columns for c in col)]
     missing_columns = [col for col in data_listnames if not all(c in data.columns for c in col)]
 
-    data = cuting_columns(data, existing_columns) #if data in single plot?
-
-    print(data)
-
-    if len(filepath) == 2: #2 bo narazie zdefiniowane ploty opierają się o maks 2 pliki
-        data_last = pd.read_csv(filepath[-1], sep=';', index_col=False, skipinitialspace=True)
+    if len(filepath) >= 2: #2 bo narazie zdefiniowane ploty opierają się o maks 2 pliki
+        data_last = pd.read_csv(filepath[1], sep=';', index_col=False, skipinitialspace=True)
         data_last = time_column(data_last)
-        
-        if (data_last['datetime'].dt.date == data['datetime'].median()).any:
-            data_last = cuting_columns(data_last, existing_columns)
-            print(data_last)
+
+        if data_last['datetime'].isin(data['datetime']).any() and len(missing_columns) == 0: #ten sam dzień
             data = pd.concat([data, data_last], ignore_index=True)
-        elif len(missing_columns) != 0:
-            print("?")
-            data_last = cuting_columns(data_last, missing_columns)
-            data = pd.merge(data_last, data, on='datetime', how='outer')
-        elif len(existing_columns) != 0:
-            print("??")
-            data_last = cuting_columns(data_last, existing_columns)
-            data = pd.merge(data_last, data, on='datetime', how='outer')
-    print(data)
-
-    # for data_listname in data_listnames[1:]:
-    #     print(":)")
-    #     if len(filepath) > 2:
-    #         print("???")
-    #         data_to_merge = data
-    #         data_listname.append("datetime")
-    #         data_to_merge = data_to_merge[data_listname]
-    #         for i in range(len(filepath)-1):
-    #             if i < (len(filepath)-1): 
-    #                 data = pd.read_csv(filepath[i+1], sep=';', index_col=False, skipinitialspace=True)
-    #                 data = time_column(data)
-    #                 data = data[data_listname]
-    #                 merged = pd.concat([data_to_merge, data])
-    #                 data_to_merge = merged
-    #         data = merged
+            data = calculate_new_columns(data, selected_data)
 
 
-    #     elif len(filepath) == 2: #dodać wyjątek że z tego samego dnia plik
-    #         data_last = pd.read_csv(filepath[-1], sep=';', index_col=False, skipinitialspace=True)
-    #         data_last = time_column(data_last)
-    #         data_last = cuting_columns(data_last, missing_columns)
-    #         data = pd.merge(data_last, data, on='datetime', how='outer')
-    # print(data)
+        elif len(missing_columns) != 0: #dane z innego pliku (phase)
+            data = pd.merge(data, data_last, on='datetime', how='outer')
+
+        elif len(existing_columns) != 0: #dane z tych samych plików z różnych dni
+            data = pd.concat([data, data_last], ignore_index=True)
+
+
+    
+    if len(filepath) > 2:
+
+        for i in range(len(filepath)-2):
+
+            data_last = pd.read_csv(filepath[i+2], sep=';', index_col=False, skipinitialspace=True)
+            data_last = time_column(data_last)
+
+            if filepath[i+2][filepath[i+2].rfind("_") +1:filepath[i+2].rfind(".")] == filepath[0][filepath[0].rfind("_") +1:filepath[0].rfind(".")]:
+                data = pd.concat([data, data_last], ignore_index=True)
+
+            else:
+                data = data.set_index('datetime')
+                data_last = data_last.set_index('datetime')
+
+                data = data.combine_first(data_last).reset_index()
+    
+    data = calculate_new_columns(data, selected_data)
+    
+    data = cuting_columns(data, data_listnames)
+    
     return data
 
+
 def data_filtering(data, data_listnames, data_colors):
-    # print(data)
+
     for j in range(len(data_listnames)):
-
-        # index_to_del = []
-        # for i, col in enumerate(list[j]):  # Iteracja po indeksach i kolumnach
-        #     # Sprawdzenie, czy wszystkie wartości w kolumnie są 0 lub NaN
-        #     print(data)
-        #     if (data[col].replace(0, np.nan).isna()).all():
-        #         index_to_del.append(i)  # Dodanie indeksu do listy
-
 
         index_to_del = [i for i, col in enumerate(data_listnames[j]) if data[col].replace(0, np.nan).isna().all()]
         columns_to_del = [data_listnames[j][i] for i in index_to_del]
@@ -162,13 +151,14 @@ def data_filtering(data, data_listnames, data_colors):
         
         for i in sorted(index_to_del, reverse=True): del data_listnames[j][i]
         for i in sorted(index_to_del, reverse=True): del data_colors[j][i]
-
+        data = data.replace(0, np.nan)
     return data, data_listnames, data_colors
     
+
 def triple_plot_corrections(data_listnames, data_colors, selected_datas, triple_plot):
     new_listname = []
     new_listcolors = []
-
+    from collections import Counter
     for i in range(len(selected_datas)):
         if selected_datas[i] in triple_plot:
             for j in range(len(data_listnames[i])):
@@ -177,7 +167,7 @@ def triple_plot_corrections(data_listnames, data_colors, selected_datas, triple_
         else:
             new_listname.append(data_listnames[i])
             new_listcolors.append(data_colors[i])
-    
+
     for el in triple_plot:
         if el in selected_datas:
             index = selected_datas.index(el)

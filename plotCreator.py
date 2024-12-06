@@ -31,24 +31,14 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
 
     else:
         import pandas as pd
-        pd.set_option('display.max_columns', None)  # Wyświetlanie wszystkich kolumn
-        pd.set_option('display.width', None)
-        # data.to_csv('output.txt', sep='\t', index=False)
 
         data_listnames, data_colors = match_data(selected_datas)
-        
+
         data, data_listnames, data_colors = data_filtering(data, data_listnames, data_colors)
 
         time_data = data.loc[(data['datetime'] >= start_time) & (data['datetime'] <= end_time)]
         
-        # cut_column = []
-        # [cut_column.extend(i) for i in data_listnames]
-        # cut_column.insert(0, "datetime")
-        
-        # cut_data = time_data[cut_column] # cut column zrobic w match data
-        # cut_data = cut_data.copy()
-        # cut_data.loc[:, "Sol"] = solution_generator(selected_station.split("(")[1].split(")")[0])
-        cut_data = data
+        cut_data = time_data
         time_diff = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") - datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
 
         xaxis_set, xaxis_label = xaxis_config(time_diff, timedelta)    
@@ -57,8 +47,15 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         if len(selected_datas) > 0:
 
             def plot(data_listnames, data_colors, selected_datas):
-                common = [el for el in selected_datas if el in triple_plot] 
+
+                if len([item for item in selected_datas if selected_datas.count(item) > 1]) > 0:
+                    selected_datas = list(set(selected_datas))
+
+                selected_datas = sorted(selected_datas)
+
+                common = [el for el in selected_datas if el in triple_plot]
                 const = 2 * len(common)
+
                 fig, axs = plt.subplots((len(selected_datas) + const), 1, figsize=(10,6))
                 lines = []
                 scatters = {}
@@ -67,14 +64,14 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 if len(selected_datas) == 1:
                     if selected_datas in single_plot:
                         axs = [axs]
-                
-                data_listnames, data_colors, selected_datas = triple_plot_corrections(data_listnames, data_colors, selected_datas, triple_plot)
+
+                if selected_datas.count(selected_datas[0]) < 2:
+                    data_listnames, data_colors, selected_datas = triple_plot_corrections(data_listnames, data_colors, selected_datas, triple_plot)
                 
                 axs = [axs] if not isinstance(axs, np.ndarray) else axs
 
                 i=0
                 for data_listname, data_color, ax in zip(data_listnames, data_colors, axs): 
-
                     if selected_datas[i] in single_plot or selected_datas[i] in triple_plot:
                         for layer_name, color in zip(data_listname, data_color):
                             line, = ax.plot(cut_data["datetime"], cut_data[layer_name], color=color, linewidth=1, label=layer_name)

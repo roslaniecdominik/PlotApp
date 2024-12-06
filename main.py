@@ -45,7 +45,7 @@ def loading_animation():
         circle2.configure(fg_color="transparent")
         circle3.configure(fg_color="transparent")
 
-def create_plot_handler(): 
+def create_plot_handler():
     create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, filepaths, station_list, selected_station_solution, data, selected_data, app)
 
 def read_time():
@@ -60,21 +60,24 @@ def read_time():
 
     filepath = []
 
-    for key, value in data_dict.items():
-        for i in selected_data:
-            if value == i:
-                for i in filepaths_cut:
-                    with open(i, "r") as file:
+    for filepath_cut in filepaths_cut:
+        for key, value in data_dict.items():
+            for selected in selected_data:
+                if value == selected:
+                    with open(filepath_cut, "r") as file:
                         first_row = file.readline()
                         if key in first_row:
-                            if i not in filepath:
-                                filepath.append(i)
+                            if filepath_cut not in filepath:
+                                filepath.append(filepath_cut)
+
+    
     
     data = pd.read_csv(filepath[0], sep=';', index_col=False, skipinitialspace=True)
     
     data = time_column(data)
     data = calculate_new_columns(data, selected_data)
     data = merge_data(data, selected_data, filepath, selected_solution)
+
 
 
     time_range = [datetime.strptime(str(min(data["datetime"])), "%Y-%m-%d %H:%M:%S"), datetime.strptime(str(max(data["datetime"])), "%Y-%m-%d %H:%M:%S")]
@@ -134,7 +137,7 @@ def read_data(event):
     for key, value in data_dict.items():
         if key in various_data:
             value_to_add.append(value)
-    
+    value_to_add = sorted(value_to_add)
     data_menu.configure(values=value_to_add)
 
     optionmenu_var = ctk.StringVar(value="Data..")
@@ -280,6 +283,7 @@ data_menu.pack(side=ctk.TOP)
 
 
 def conf_fun():
+
     selected = {option: ctk.BooleanVar(value=False) for option in value_to_add}
     menu_window = ctk.CTkToplevel(app)
     menu_window.title("Options")
