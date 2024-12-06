@@ -58,7 +58,6 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
 
                 fig, axs = plt.subplots((len(selected_datas) + const), 1, figsize=(10,6))
                 lines = []
-                scatters = {}
                 scatters_test =[]
 
                 if len(selected_datas) == 1:
@@ -69,6 +68,11 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                     data_listnames, data_colors, selected_datas = triple_plot_corrections(data_listnames, data_colors, selected_datas, triple_plot)
                 
                 axs = [axs] if not isinstance(axs, np.ndarray) else axs
+
+                
+                invisible_data = [0 for _ in range(cut_data[start_index:].shape[0])]
+                invisible_data[0] = cut_data[[col for col in cut_data.columns if col.startswith('N_')]].min().min()
+                invisible_data[-1] = cut_data[[col for col in cut_data.columns if col.startswith('N_')]].max().max()
 
                 i=0
                 for data_listname, data_color, ax in zip(data_listnames, data_colors, axs): 
@@ -83,10 +87,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                         for layer_name, color in zip(data_listname, data_color):
                             scatter = ax.scatter(cut_data["datetime"], cut_data[layer_name], color=color, s=0.05, label=layer_name)
                             lines.append(scatter)
-                        
-                        invisible_line1, = ax.plot(cut_data["datetime"], cut_data[layer_name], color='none')
-                        invisible_line2, = ax.plot(cut_data["datetime"], cut_data[layer_name], color='none')
-                        invisible_lines = [invisible_line1, invisible_line2]
+                        invisible_line, = ax.plot(cut_data["datetime"], invisible_data, color='green')
                         
                     ax.legend(loc='upper left', bbox_to_anchor=(1.05, 0.7), borderaxespad=-3)
                     ax.set_title(selected_datas[i])
@@ -102,11 +103,11 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 station_range_text = axs[0].text(-0.12, 1.35, f"{selected_station}, {extend_time}", transform=axs[0].transAxes, va='top', ha='left', fontsize=11)
                 
                 try:
-                    invisible_lines
+                    invisible_line
                 except:
-                    invisible_lines = []
+                    invisible_line = ""
 
-                return fig, axs, lines, station_range_text, scatters_test, invisible_lines, data_listnames, data_colors, selected_datas
+                return fig, axs, lines, station_range_text, scatters_test, invisible_line, data_listnames, data_colors, selected_datas
         
         #-----------------
         elif selected_datas in single_scatter:
@@ -120,7 +121,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                     lines.append(plots[layer_name])
                 invisible_line1, = axs.plot(cut_data["datetime"], cut_data[layer_name], color='none')
                 invisible_line2, = axs.plot(cut_data["datetime"], cut_data[layer_name], color='none')
-                invisible_lines = [invisible_line1, invisible_line2]
+                invisible_line = [invisible_line1, invisible_line2]
                 axs.set_title(selected_datas, font="Verdana", fontsize=14, fontweight="light")
                 axs.set_xlabel(xaxis_label, font="Verdana")
                 axs.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
@@ -131,7 +132,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 station_range_text = axs.text(-0.12, 1.10, f"{selected_station}, {extend_time}", transform=axs.transAxes, va='top', ha='left', fontsize=11)
                 fig.subplots_adjust(left=0.15)
                 
-                return fig, axs, lines, station_range_text, invisible_lines
+                return fig, axs, lines, station_range_text, invisible_line
 
         elif selected_datas in single_plot:
 
@@ -154,9 +155,9 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 station_range_text = axs.text(-0.12, 1.10, f"{selected_station}, {extend_time}", transform=axs.transAxes, va='top', ha='left', fontsize=11)
                 fig.subplots_adjust(left=0.15)
                 
-                invisible_lines = []
+                invisible_line = ""
 
-                return fig, axs, lines, station_range_text, invisible_lines
+                return fig, axs, lines, station_range_text, invisible_line
 
         elif selected_datas in triple_plot:
             def plot(data_listnames):
@@ -180,11 +181,11 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 # fig.sus_adjust(left=0.01)
                 fig.tight_layout()
                 
-                invisible_lines = []
+                invisible_line = ""
                 
-                return fig, axs, lines, station_range_text, invisible_lines
+                return fig, axs, lines, station_range_text, invisible_line
 
-        fig, axs, lines, station_range_text, scatters, invisible_lines, data_listnames, data_colors, selected_datas = plot(data_listnames, data_colors, selected_datas)
+        fig, axs, lines, station_range_text, scatters, invisible_line, data_listnames, data_colors, selected_datas = plot(data_listnames, data_colors, selected_datas)
         
         new_window = ctk.CTkToplevel(app)
         new_window.title("PLOT")
@@ -277,6 +278,6 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         toolbar.pack(side="left")
         toolbar._message_label.config(width=22)
         
-        data_slider = ctk.CTkSlider(toolbar_slider_frame, from_=0, to=cut_data.shape[0]-1, number_of_steps=cut_data.shape[0]-1, width=500, height=20, command=lambda value: plot_updater_slider(value, lines, axs, data_listnames, canvas_plot, cut_data, station_range_text, selected_station, "", invisible_lines, "", "", "", ""))
+        data_slider = ctk.CTkSlider(toolbar_slider_frame, from_=0, to=cut_data.shape[0]-1, number_of_steps=cut_data.shape[0]-1, width=500, height=20, command=lambda value: plot_updater_slider(value, lines, axs, data_listnames, canvas_plot, cut_data, station_range_text, selected_station, "", invisible_line, single_scatter, selected_datas, "", ""))
         data_slider.set(start_index)
         data_slider.pack(side="right", expand=True, padx=5)
