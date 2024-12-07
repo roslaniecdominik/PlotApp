@@ -11,8 +11,8 @@ def layer_buttons(fig, axs, data_listnames, layers_frame, data_colors):
         for i, layer_name in enumerate(data_listname):
             
             if type(ax) != np.ndarray and any(isinstance(coll, PathCollection) for coll in ax.collections):
-                
-                if any(i in data_listname[0] for i in ["GPS", "GLONASS", "GALILEO", "BeiDou", "IRNSS", "SBAS"]): #ground track
+
+                if any(i in data_listname[0] for i in ["GPS", "GLONASS", "GALILEO", "BeiDou", "IRNSS", "SBAS"]) and "_" not in data_listname[0]: #ground track
 
                     layer_label = ctk.CTkLabel(layers_frame, text=data_listname[i])
                     layer_label.pack(side=ctk.TOP, padx=10, pady=(10,2))

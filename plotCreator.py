@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from tkinter import messagebox
 from matplotlib.ticker import ScalarFormatter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from matplotlib.lines import Line2D
 
 from components.dataConfiguration import match_data_after, defining_data, data_filtering, triple_plot_corrections
 from components.centerWindow import center_window
@@ -30,8 +31,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         messagebox.showinfo("Message", "Starting time must be less than end time")
 
     else:
-        import pandas as pd
-
+        
         data_listnames, data_colors = match_data_after(selected_datas)
 
         data, data_listnames, data_colors = data_filtering(data, data_listnames, data_colors)
@@ -47,11 +47,14 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         if len(selected_datas) > 0:
 
             def plot(data_listnames, data_colors, selected_datas):
-
+                print(data_listnames)
+                print(data_colors)
+                print(selected_datas)
                 if len([item for item in selected_datas if selected_datas.count(item) > 1]) > 0:
                     selected_datas = list(set(selected_datas))
 
-                selected_datas = sorted(selected_datas)
+                # selected_datas = sorted(selected_datas)
+                # data_listnames = sorted(selected_datas)
 
                 common = [el for el in selected_datas if el in triple_plot]
                 const = 2 * len(common)
@@ -76,29 +79,31 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 invisible_data[-1] = cut_data[[col for col in cut_data.columns if col.startswith('N_')]].max().max()
 
                 i=0
-                for data_listname, data_color, ax in zip(data_listnames, data_colors, axs): 
+                for data_listname, data_color, ax in zip(data_listnames, data_colors, axs):
+                    legend_elements = []
                     if selected_datas[i] in single_plot or selected_datas[i] in triple_plot:
                         for layer_name, color in zip(data_listname, data_color):
-                            line, = ax.plot(cut_data["datetime"], cut_data[layer_name], color=color, linewidth=1, label=layer_name, zorder=2)
+                            print(layer_name, cut_data[layer_name])
+                            line, = ax.plot(cut_data["datetime"], cut_data[layer_name], color=color, linewidth=1, zorder=2)
                             lines.append(line,)
-                        
+                            legend_elements.append(Line2D([0], [0], color=color, lw=2, label=layer_name))
 
                     elif selected_datas[i] in single_scatter:
-                        from matplotlib.lines import Line2D
+                        
                         shapes_data = ["Bad IFree", "No Clock", "No Orbit", "Cycle Slips", "Outliers", "Eclipsing"]
                         shapes = ["s", "x", "+", "^", "o", "D"]
-                        legend_elements = []
+                        
                         for layer_name, color in zip(data_listname, data_color):
                             
 
                             if layer_name in shapes_data:
                                 index = shapes_data.index(layer_name)
-                                scatter = ax.scatter(cut_data["datetime"], cut_data[layer_name], color=color, s=20, label=layer_name, zorder=3, marker=shapes[index])
+                                scatter = ax.scatter(cut_data["datetime"], cut_data[layer_name], color=color, s=20, zorder=3, marker=shapes[index])
                                 
                                 legend_elements.append(Line2D([0], [0], marker=shapes[index], color="white", markerfacecolor=color, markersize=10, label=layer_name))
                                 
                             else:
-                                scatter = ax.scatter(cut_data["datetime"], cut_data[layer_name], color=color, s=1, label=layer_name, zorder=2)
+                                scatter = ax.scatter(cut_data["datetime"], cut_data[layer_name], color=color, s=1, zorder=2)
                                 lines.append(scatter)
                                 if "PRN_" in layer_name:
                                     legend_elements.append(Line2D([0], [0], color=color, lw=2, label=layer_name))
@@ -108,19 +113,22 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                         invisible_line, = ax.plot(cut_data["datetime"], invisible_data, color='none')
                         invisible_lines.append(invisible_line)
              
-                    ax.legend(loc='upper left', bbox_to_anchor=(1.05, 0.68), borderaxespad=-3, handles=legend_elements)
-                    ax.set_title(selected_datas[i])
+                    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), handles=legend_elements)
                     ax.grid(True, zorder=1)
                     ax.xaxis.set_tick_params(labelbottom=False)
                     ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
                     ax.ticklabel_format(useOffset=False, axis='y', style='plain')
+                    ax.set_ylabel(selected_datas[i].replace(" ","\n"))
+                    ax.yaxis.set_label_coords(-0.09, 0.5)
+
                     i += 1
 
                 axs[-1].xaxis.set_tick_params(labelbottom=True)
                 axs[-1].xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
                 extend_time = f"{datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")}  -  {datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")}"
-                station_range_text = axs[0].text(-0.12, 1.35, f"{selected_station}, {extend_time}", transform=axs[0].transAxes, va='top', ha='left', fontsize=11)
-                
+                station_range_text = axs[0].text(0.5, 1.35, f"{selected_station}, {extend_time}", va='bottom', ha='center', transform=axs[0].transAxes, fontsize=11)
+                fig.subplots_adjust(left=0.1, right=0.88)
+
                 try:
                     invisible_lines
                 except:
