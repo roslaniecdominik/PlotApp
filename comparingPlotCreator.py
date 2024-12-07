@@ -7,7 +7,7 @@ from matplotlib.ticker import ScalarFormatter
 from datetime import datetime
 
 from components.dataConfiguration import merge_data, time_column
-from components.dataConfiguration import defining_data, match_data
+from components.dataConfiguration import defining_data, match_data_after
 from components.centerWindow import center_window
 from components.solutionGenerator import solution_generator
 from components.frames import plot_frames
@@ -19,7 +19,7 @@ data_dict, single_scatter, single_plot, triple_plot = defining_data()
 def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, cut_data, cut_column, selected_station_solution, error_label, 
                      start_time, end_time, station_list, xaxis_set, xaxis_label, app):
         
-            data_listname, data_colors = match_data(selected_data)
+            data_listname, data_colors = match_data_after(selected_data)
 
             selected_secondStation_solution = secondStation_menu_fullVar.get()
 

@@ -197,15 +197,23 @@ def hour_slider_event(id, time, date, year_entry1, year_entry2, hour_entry1, hou
         hour_entry1.insert(0, selected_date)
 
 def plot_updater_slider(value,  lines, axss, data_listnames, canvas_plot, cut_data, station_range_text, selected_station, selected_secondStation_solution, cord_time, cord1, cord2, sol_df, layer_name):
-            invisible_line = cord_time
+            invisible_lines = cord_time
             start_index = int(value)
             extend_time = f"{str(cut_data.iloc[start_index]['datetime'])}  -  {str(cut_data.iloc[-1]['datetime'])}"
             data_listnames = [el for list in data_listnames for el in list]
             
-            invisible_data = [0 for _ in range(cut_data[start_index:].shape[0])]
-            invisible_data[0] = cut_data[start_index:][[col for col in cut_data[start_index:].columns if col.startswith('N_')]].min().min()
-            invisible_data[-1] = cut_data[start_index:][[col for col in cut_data[start_index:].columns if col.startswith('N_')]].max().max()
+            scatter_symbols = ["C_", "N_", "L_", "PRN"]
+            invisible_datas = []
+            
+            for scatter_symbol in scatter_symbols:
 
+                if any(column.startswith(scatter_symbol) for column in cut_data.columns):
+                    invisible_data = [0 for _ in range(cut_data[start_index:].shape[0])]
+                    invisible_data[0] = cut_data[start_index:][[col for col in cut_data[start_index:].columns if col.startswith(scatter_symbol)]].min().min()
+                    invisible_data[-1] = cut_data[start_index:][[col for col in cut_data[start_index:].columns if col.startswith(scatter_symbol)]].max().max()
+                    invisible_datas.append(invisible_data)
+
+            
             for data_listname, line in zip(data_listnames, lines):
                 if type(axss) == "s":#np.ndarray:
                     if axss.ndim == 1: #one column
@@ -233,7 +241,7 @@ def plot_updater_slider(value,  lines, axss, data_listnames, canvas_plot, cut_da
                         
                 else:
                     if selected_secondStation_solution != "":
-                        invisible_line = data_listname
+                        invisible_lines = data_listname
 
                         extend_time = f"{str(cord_time.iloc[start_index]["datetime"])} - {str(cord_time.iloc[-1]["datetime"])}"
                         x_axss = cord1
@@ -243,18 +251,18 @@ def plot_updater_slider(value,  lines, axss, data_listnames, canvas_plot, cut_da
 
                         lines[0].set_offsets(list(zip(x_axss[start_index:], y_axss[start_index:])))
                         lines[1].set_offsets(list(zip(x_axss2[start_index:], y_axss2[start_index:])))
-                        invisible_line[0].set_data(x_axss[start_index:], y_axss[start_index:])
-                        invisible_line[1].set_data(x_axss2[start_index:], y_axss2[start_index:])
+                        invisible_lines[0].set_data(x_axss[start_index:], y_axss[start_index:])
+                        invisible_lines[1].set_data(x_axss2[start_index:], y_axss2[start_index:])
                         axss.relim()
                         axss.autoscale_view()
                         station_range_text.set_text(f"{selected_station} vs {selected_secondStation_solution}      {extend_time}")
 
                         
                     else:
-                        
                         if isinstance(line, PathCollection):
                             line.set_offsets(list(zip(cut_data['datetime'][start_index:], cut_data[data_listname][start_index:])))
-                            invisible_line.set_data(cut_data['datetime'][start_index:], invisible_data)
+                            for invisible_line, invisible_data in zip(invisible_lines, invisible_datas):
+                                invisible_line.set_data(cut_data['datetime'][start_index:], invisible_data)
 
                         elif isinstance(line, plt.Line2D):
                             # wszystkie single liniowe, działa pojedyńczy triple, działa podwójny triple, działa mix triple z single

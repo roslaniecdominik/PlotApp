@@ -6,7 +6,7 @@ import pandas as pd
 
 from components.buttonState import buttonState
 from components.centerWindow import center_window
-from components.dataConfiguration import merge_data, time_column, defining_data
+from components.dataConfiguration import merge_data, time_column, defining_data, prn_filtering, match_data_after
 from components.frames import minmax_frame, sliders_frame, selected_time
 from plotCreator import create_plot
 from components.sliderEvent import year_slider_event, hour_slider_event, time_updater
@@ -68,17 +68,33 @@ def read_time():
                         first_row = file.readline()
                         if key in first_row:
                             if filepath_cut not in filepath:
-                                filepath.append(filepath_cut)
+                                if "Eztd" not in filepath_cut:
+                                    filepath.append(filepath_cut)
 
-    
+    def cuting_columns(dataframe, data_listname):
+        cut_column = []
+        [cut_column.extend(i) for i in data_listname]
+        cut_column.insert(0, "datetime")
+
+        cut_data = dataframe[cut_column]
+        cut_data = cut_data.copy()
+        cut_data.loc[:, "Sol"] = selected_solution
+        return cut_data
     
     data = pd.read_csv(filepath[0], sep=';', index_col=False, skipinitialspace=True)
     
     data = time_column(data)
-    data = calculate_new_columns(data, selected_data)
+  
+    if "Err" in filepath[0]: #zestaw
+        data = data.rename(columns={'PRN': 'PRN_sign'})
+
     data = merge_data(data, selected_data, filepath, selected_solution)
+    # tion('display.max_rows', None)  # Ustawienie, aby wyświetlić wszystkie wiersze
+    # pd.set_option('display.max_columns', None)
 
-
+    data = calculate_new_columns(data, selected_data)
+    data_listnames, data_colors = match_data_after(selected_data)
+    data = cuting_columns(data, data_listnames)
 
     time_range = [datetime.strptime(str(min(data["datetime"])), "%Y-%m-%d %H:%M:%S"), datetime.strptime(str(max(data["datetime"])), "%Y-%m-%d %H:%M:%S")]
 
@@ -137,7 +153,12 @@ def read_data(event):
     for key, value in data_dict.items():
         if key in various_data:
             value_to_add.append(value)
-    value_to_add = sorted(value_to_add)
+    
+
+    if not prn_filtering(filepaths_cut):
+        value_to_add.remove("PRN")
+
+    value_to_add = sorted(value_to_add, key=str.casefold)
     data_menu.configure(values=value_to_add)
 
     optionmenu_var = ctk.StringVar(value="Data..")
