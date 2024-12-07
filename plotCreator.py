@@ -47,14 +47,8 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         if len(selected_datas) > 0:
 
             def plot(data_listnames, data_colors, selected_datas):
-                print(data_listnames)
-                print(data_colors)
-                print(selected_datas)
                 if len([item for item in selected_datas if selected_datas.count(item) > 1]) > 0:
                     selected_datas = list(set(selected_datas))
-
-                # selected_datas = sorted(selected_datas)
-                # data_listnames = sorted(selected_datas)
 
                 common = [el for el in selected_datas if el in triple_plot]
                 const = 2 * len(common)
@@ -74,16 +68,11 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 axs = [axs] if not isinstance(axs, np.ndarray) else axs
 
                 
-                invisible_data = [0 for _ in range(cut_data[start_index:].shape[0])]
-                invisible_data[0] = cut_data[[col for col in cut_data.columns if col.startswith('N_')]].min().min()
-                invisible_data[-1] = cut_data[[col for col in cut_data.columns if col.startswith('N_')]].max().max()
-
                 i=0
                 for data_listname, data_color, ax in zip(data_listnames, data_colors, axs):
                     legend_elements = []
                     if selected_datas[i] in single_plot or selected_datas[i] in triple_plot:
                         for layer_name, color in zip(data_listname, data_color):
-                            print(layer_name, cut_data[layer_name])
                             line, = ax.plot(cut_data["datetime"], cut_data[layer_name], color=color, linewidth=1, zorder=2)
                             lines.append(line,)
                             legend_elements.append(Line2D([0], [0], color=color, lw=2, label=layer_name))
@@ -94,7 +83,10 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                         shapes = ["s", "x", "+", "^", "o", "D"]
                         
                         for layer_name, color in zip(data_listname, data_color):
-                            
+                            if layer_name == data_listname[0]:
+                                invisible_data = [0 for _ in range(cut_data[start_index:].shape[0])]
+                                invisible_data[0] = cut_data[[col for col in cut_data.columns if col.startswith(layer_name[:2])]].min().min()
+                                invisible_data[-1] = cut_data[[col for col in cut_data.columns if col.startswith(layer_name[:2])]].max().max()
 
                             if layer_name in shapes_data:
                                 index = shapes_data.index(layer_name)
@@ -126,7 +118,8 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 axs[-1].xaxis.set_tick_params(labelbottom=True)
                 axs[-1].xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
                 extend_time = f"{datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")}  -  {datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")}"
-                station_range_text = axs[0].text(0.5, 1.35, f"{selected_station}, {extend_time}", va='bottom', ha='center', transform=axs[0].transAxes, fontsize=11)
+                
+                station_range_text = axs[0].text(0.5, 1.20, f"{selected_station}, {extend_time}", va='bottom', ha='center', transform=axs[0].transAxes, fontsize=11)
                 fig.subplots_adjust(left=0.1, right=0.88)
 
                 try:

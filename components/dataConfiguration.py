@@ -57,7 +57,7 @@ def match_data_before(data):
                 data_listname.append(["L_Res1", "L_Res2", "L_Res3", "L_Res4", "L_Res5", "L_Res6", "L_Res7", "L_Res8", "L_Res_IF"])
             case "PRN":
                 data_listname.append(["PRN", "Typ"])
-        return data_listname
+    return data_listname
 
 def match_data_after(data):
     data_listname = []
@@ -132,6 +132,7 @@ def time_column(data):
 
 
 def merge_data(data, selected_data, filepath, selected_station):
+
     data_listnames = match_data_before(selected_data)
 
     existing_columns = [col for col in data_listnames if all(c in data.columns for c in col)]
@@ -147,8 +148,7 @@ def merge_data(data, selected_data, filepath, selected_station):
         if data_last['datetime'].isin(data['datetime']).any() and len(missing_columns) == 0: #ten sam dzień
             data = pd.concat([data, data_last], axis=1)
 
-        elif len(missing_columns) != 0 and "PRN" in selected_data:
-
+        elif (len(missing_columns) != 0 and "PRN" in selected_data):
             data = pd.merge(data_last, data, on='datetime', how='outer')
             for col in data.columns:
                 if '_x' in col:
@@ -156,6 +156,13 @@ def merge_data(data, selected_data, filepath, selected_station):
                     if f"{base_col}_y" in data.columns:
                         data[base_col] = data[col].combine_first(data[f"{base_col}_y"])
                         data = data.drop(columns=[col, f"{base_col}_y"])
+        
+        elif len(missing_columns) != 0 and "Amb" in filepath[0] and "Res" in filepath[1]: #code res & phase amb
+            data_last = data_last.drop(["PRN", "Stat"], axis=1)
+            data_last['id'] = range(1, len(data_last) + 1)
+            data['id'] = range(1, len(data) + 1)
+            data = pd.merge(data, data_last, on='id', how='inner')
+            data = data.drop(columns=['datetime_y']).rename(columns={'datetime_x': 'datetime'})
 
         elif len(missing_columns) != 0: #dane z innego pliku (phase)
             data = pd.merge(data, data_last, on='datetime', how='outer')

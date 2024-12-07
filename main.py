@@ -89,8 +89,6 @@ def read_time():
         data = data.rename(columns={'PRN': 'PRN_sign'})
 
     data = merge_data(data, selected_data, filepath, selected_solution)
-    # tion('display.max_rows', None)  # Ustawienie, aby wyświetlić wszystkie wiersze
-    # pd.set_option('display.max_columns', None)
 
     data = calculate_new_columns(data, selected_data)
     data_listnames, data_colors = match_data_after(selected_data)
