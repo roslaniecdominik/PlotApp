@@ -99,11 +99,13 @@ def match_data_after(data):
                 data_listname.append(["RecClkG", "RecClkR", "RecClkE", "RecClkC", "RecClkJ", "RecClkS"])
                 data_colors.append(["green", "blue", "red", "black", "orange", "aqua"])
             case "Code Residuals":
-                data_listname.append(["C_Res1", "C_Res2", "C_Res3", "C_Res4", "C_Res5", "C_Res6", "C_Res7", "C_Res8", "C_Res_IF"])
-                data_colors.append(["green", "blue", "red", "blue", "red", "blue", "green", "blue", "green"])
+                data_listname.append(["C_Res1 GPS", "C_Res2 GPS", "C_Res3 GPS", "C_Res4 GPS", "C_Res5 GPS", "C_Res6 GPS", "C_Res7 GPS", "C_Res8 GPS", "C_Res_IF GPS",
+                                      "C_Res1 Galileo", "C_Res2 Galileo", "C_Res3 Galileo", "C_Res4 Galileo", "C_Res5 Galileo", "C_Res6 Galileo", "C_Res7 Galileo", "C_Res8 Galileo", "C_Res_IF Galileo"])
+                data_colors.append(["limegreen"]*9 + ["dodgerblue"]*9)
             case "Phase Residuals":
-                data_listname.append(["L_Res1", "L_Res2", "L_Res3", "L_Res4", "L_Res5", "L_Res6", "L_Res7", "L_Res8", "L_Res_IF"])
-                data_colors.append(["green", "blue", "red", "blue", "red", "blue", "green", "blue", "green"])
+                data_listname.append(["L_Res1 GPS", "L_Res2 GPS", "L_Res3 GPS", "L_Res4 GPS", "L_Res5 GPS", "L_Res6 GPS", "L_Res7 GPS", "L_Res8 GPS", "L_Res_IF GPS", 
+                                      "L_Res1 Galileo", "L_Res2 Galileo", "L_Res3 Galileo", "L_Res4 Galileo", "L_Res5 Galileo", "L_Res6 Galileo", "L_Res7 Galileo", "L_Res8 Galileo", "L_Res_IF Galileo"])
+                data_colors.append(["limegreen"]*9 + ["dodgerblue"]*9)
             case "PRN":
                 data_listname.append(["PRN_GPS", "PRN_Galileo", "Bad IFree", "No Clock", "No Orbit", "Cycle Slips", "Outliers", "Eclipsing"])
                 data_colors.append(["limegreen", "dodgerblue", "pink", "orange", "limegreen", "dodgerblue", "red", "grey"])

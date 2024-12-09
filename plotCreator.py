@@ -1,6 +1,7 @@
 import customtkinter as ctk
 import matplotlib.pyplot as plt
 import numpy as np
+import time
                 
 from datetime import datetime, timedelta
 from tkinter import messagebox
@@ -218,11 +219,54 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         new_window.attributes("-topmost", True)
         new_window.after(500, stop)
 
-    
+        canvas_frame = ctk.CTkFrame(new_window, corner_radius=0)
+        canvas_plot = FigureCanvasTkAgg(fig, master=canvas_frame)
         
+
+        toolbar_slider_frame = ctk.CTkFrame(new_window, fg_color="#F0F0F0", corner_radius=0)
+        toolbar_slider_frame.pack(side=ctk.BOTTOM, fill=ctk.X)
+
+        toolbar = NavigationToolbar2Tk(canvas_plot, toolbar_slider_frame)
+        toolbar.update()
+        toolbar.pack(side=ctk.LEFT)
+        toolbar._message_label.config(width=22)
+
+        def data_entry_event(event):
+            if (cut_data['datetime'] == data_entry.get()).any():
+                value = cut_data[cut_data['datetime'] == data_entry.get()].index[0]
+                data_slider.set(value)
+                plot_updater_slider(value, lines, axs, data_listnames, canvas_plot, cut_data, station_range_text, selected_station, "", invisible_lines, single_scatter, selected_datas, "", data_entry)
+            else:
+                data_entry.delete(0, ctk.END)
+                default_color = data_entry.cget("text_color")
+                data_entry.configure(text_color="red")
+                data_entry.insert(0, "value out of range")
+                def update_entry():
+                    data_entry.delete(0, ctk.END)
+                    data_entry.configure(text_color=default_color)
+                    data_entry.insert(0, cut_data.loc[start_index, "datetime"])
+                data_entry.after(2000, update_entry)
+                
+        
+        data_entry = ctk.CTkEntry(toolbar_slider_frame, width=198, justify="center")
+        data_entry.pack(side=ctk.RIGHT, padx=(0,2))
+        data_entry.insert(0, cut_data.loc[start_index, "datetime"])
+        data_entry.bind("<Return>", data_entry_event)
+
+        data_slider = ctk.CTkSlider(toolbar_slider_frame, from_=0, to=cut_data.shape[0]-1, number_of_steps=cut_data.shape[0]-1, width=500, height=20, command=lambda value: plot_updater_slider(value, lines, axs, data_listnames, canvas_plot, cut_data, station_range_text, selected_station, "", invisible_lines, single_scatter, selected_datas, "", data_entry))
+        data_slider.set(start_index)
+        data_slider.pack(side=ctk.RIGHT, expand=True, padx=5)
+        
+        
+
         right_frame = ctk.CTkFrame(new_window)
         right_frame.pack(side=ctk.RIGHT, fill=ctk.Y)
         
+
+        canvas_frame.pack(side=ctk.TOP, fill="both", expand=True)
+        canvas_plot.get_tk_widget().pack(fill=ctk.BOTH, expand=True)
+
+
         layers_label = ctk.CTkLabel(right_frame, text="Layers", font=("Helvetica", 22))
         layers_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 10))
 
@@ -287,17 +331,4 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         error_label.pack(side=ctk.TOP, fill="both", pady=10)
         error_label.configure(state="disabled")
 
-        canvas_plot = FigureCanvasTkAgg(fig, master=new_window)
-        canvas_plot.get_tk_widget().pack(fill=ctk.BOTH, expand=True)
-
-        toolbar_slider_frame = ctk.CTkFrame(new_window, fg_color="#F0F0F0", corner_radius=0)
-        toolbar_slider_frame.pack(side=ctk.BOTTOM, fill=ctk.X)
-
-        toolbar = NavigationToolbar2Tk(canvas_plot, toolbar_slider_frame)
-        toolbar.update()
-        toolbar.pack(side="left")
-        toolbar._message_label.config(width=22)
- 
-        data_slider = ctk.CTkSlider(toolbar_slider_frame, from_=0, to=cut_data.shape[0]-1, number_of_steps=cut_data.shape[0]-1, width=500, height=20, command=lambda value: plot_updater_slider(value, lines, axs, data_listnames, canvas_plot, cut_data, station_range_text, selected_station, "", invisible_lines, single_scatter, selected_datas, "", ""))
-        data_slider.set(start_index)
-        data_slider.pack(side="right", expand=True, padx=5)
+        
