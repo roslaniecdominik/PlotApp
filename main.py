@@ -70,6 +70,10 @@ def read_time():
                             if filepath_cut not in filepath:
                                 if "Eztd" not in filepath_cut:
                                     filepath.append(filepath_cut)
+                   
+    if "Ionospheric delay" not in selected_data and any("IonDel" in _ for _ in filepath):
+        filepath = [_ for _ in filepath if "IonDel" not in _]
+ 
 
     def cuting_columns(dataframe, data_listname):
         cut_column = []
@@ -89,11 +93,9 @@ def read_time():
         data = data.rename(columns={'PRN': 'PRN_sign'})
 
     data = merge_data(data, selected_data, filepath, selected_solution)
-
     data = calculate_new_columns(data, selected_data)
     data_listnames, data_colors = match_data_after(selected_data)
     data = cuting_columns(data, data_listnames)
-
     time_range = [datetime.strptime(str(min(data["datetime"])), "%Y-%m-%d %H:%M:%S"), datetime.strptime(str(max(data["datetime"])), "%Y-%m-%d %H:%M:%S")]
 
     time_dif = int((time_range[-1] - time_range[0]).days)

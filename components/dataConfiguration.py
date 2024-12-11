@@ -134,67 +134,58 @@ def time_column(data):
 
 
 def merge_data(data, selected_data, filepath, selected_station):
-
+    
     data_listnames = match_data_before(selected_data)
 
     existing_columns = [col for col in data_listnames if all(c in data.columns for c in col)]
     missing_columns = [col for col in data_listnames if not all(c in data.columns for c in col)]
 
-    if len(filepath) >= 2: #2 bo narazie zdefiniowane ploty opierają się o maks 2 pliki
+    if len(filepath) >= 2:
         data_last = pd.read_csv(filepath[1], sep=';', index_col=False, skipinitialspace=True)
         data_last = time_column(data_last)
-
-        if "Err" in filepath[1]: #zestaw
+        if "Err" in filepath[1]:
             data_last = data_last.rename(columns={'PRN': 'PRN_sign'})
+            
+        if "PRN" in data.columns and "PRN" in data_last.columns and data['PRN'].equals(data_last['PRN']): #if data_last has longer PRN than data
+            data = data.set_index('datetime')
+            data_last = data_last.set_index('datetime')
+            data = data.combine_first(data_last).reset_index()
 
-        if data_last['datetime'].isin(data['datetime']).any() and len(missing_columns) == 0: #ten sam dzień
-            data = pd.concat([data, data_last], axis=1)
+        elif (len(missing_columns) != 0 and "PRN" in selected_data and "Err" in filepath[1]): # if data has full PRN an data_last incompplete
+            data["row_number"] = data.groupby("datetime").cumcount()
+            data_last["row_number"] = data_last.groupby("datetime").cumcount()                
+            data = pd.merge(data, data_last, on=['datetime', 'row_number'], how='left')
 
-        elif (len(missing_columns) != 0 and "PRN" in selected_data):
-            data = pd.merge(data_last, data, on='datetime', how='outer')
-            for col in data.columns:
-                if '_x' in col:
-                    base_col = col.split('_x')[0]
-                    if f"{base_col}_y" in data.columns:
-                        data[base_col] = data[col].combine_first(data[f"{base_col}_y"])
-                        data = data.drop(columns=[col, f"{base_col}_y"])
-        
-        elif len(missing_columns) != 0 and "Amb" in filepath[0] and "Res" in filepath[1]: #code res & phase amb
-            data_last = data_last.drop(["PRN", "Stat"], axis=1)
-            data_last['id'] = range(1, len(data_last) + 1)
-            data['id'] = range(1, len(data) + 1)
-            data = pd.merge(data, data_last, on='id', how='inner')
-            data = data.drop(columns=['datetime_y']).rename(columns={'datetime_x': 'datetime'})
-
-        elif len(missing_columns) != 0: #dane z innego pliku (phase)
+        elif len(missing_columns) != 0: #phase (2 files)
             data = pd.merge(data, data_last, on='datetime', how='outer')
 
 
-
-        elif len(existing_columns) != 0: #dane z tych samych plików z różnych dni
+        elif len(existing_columns) != 0: #same file but  from several days
             data = pd.concat([data, data_last], ignore_index=True)
 
-
-    
     if len(filepath) > 2:
-
+        
         for i in range(len(filepath)-2):
 
             data_last = pd.read_csv(filepath[i+2], sep=';', index_col=False, skipinitialspace=True)
             data_last = time_column(data_last)
-
-            if "Err" in filepath[i+2]: #zestaw
+            
+            if "Err" in filepath[i+2]:
                 data_last = data_last.rename(columns={'PRN': 'PRN_sign'})
 
-            if filepath[i+2][filepath[i+2].rfind("_") +1:filepath[i+2].rfind(".")] == filepath[0][filepath[0].rfind("_") +1:filepath[0].rfind(".")]:
+            if filepath[i+2][filepath[i+2].rfind("_") +1:filepath[i+2].rfind(".")] == filepath[0][filepath[0].rfind("_") +1:filepath[0].rfind(".")]: #if same file from another day (Amb)
                 data = pd.concat([data, data_last], ignore_index=True)
 
-            else:
+            elif len(data) > len(data_last) and "PRN" in data_last:
+                data_last = data_last.drop(columns=[col for col in data.columns if col in data_last.columns and col != 'datetime'])
+                data["row_number"] = data.groupby("datetime").cumcount()
+                data_last["row_number"] = data_last.groupby("datetime").cumcount()                
+                data = pd.merge(data, data_last, on=['datetime', 'row_number'], how='left')
+
+            else: #if data_last has longer PRN than data
                 data = data.set_index('datetime')
                 data_last = data_last.set_index('datetime')
-
                 data = data.combine_first(data_last).reset_index()
-
 
     return data
 

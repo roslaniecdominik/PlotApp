@@ -68,7 +68,6 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 
                 axs = [axs] if not isinstance(axs, np.ndarray) else axs
 
-                
                 i=0
                 for data_listname, data_color, ax in zip(data_listnames, data_colors, axs):
                     legend_elements = []
@@ -84,6 +83,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                         shapes = ["s", "x", "+", "^", "o", "D"]
                         
                         for layer_name, color in zip(data_listname, data_color):
+        
                             if layer_name == data_listname[0]:
                                 invisible_data = [0 for _ in range(cut_data[start_index:].shape[0])]
                                 invisible_data[0] = cut_data[[col for col in cut_data.columns if col.startswith(layer_name[:2])]].min().min()
@@ -257,7 +257,9 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         data_slider.set(start_index)
         data_slider.pack(side=ctk.RIGHT, expand=True, padx=5)
         
-        
+        if any(item in single_scatter for item in selected_datas):
+            data_slider.configure(state="disabled")
+
 
         right_frame = ctk.CTkFrame(new_window)
         right_frame.pack(side=ctk.RIGHT, fill=ctk.Y)
