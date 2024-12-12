@@ -13,6 +13,7 @@ from components.sliderEvent import year_slider_event, hour_slider_event, time_up
 from components.timeLabelClearing import timeLabelClearing
 from components.solutionGenerator import solution_generator
 from components.calculateNewColumns import calculate_new_columns
+from components.statistcs import calc_statistics
 
 data_dict = defining_data()
 color_index = 0
@@ -46,10 +47,10 @@ def loading_animation():
         circle3.configure(fg_color="transparent")
 
 def create_plot_handler():
-    create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, filepaths, station_list, selected_station_solution, data, selected_data, app)
+    create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, filepaths, station_list, selected_station_solution, data, selected_data, app, stat_list)
 
 def read_time():
-    global data, selected_data, filepath, loading_check, time_range, time_dif, selected_solution
+    global data, selected_data, filepath, loading_check, time_range, time_dif, selected_solution, stat_list
 
     show_plot_button.configure(state="disabled")
 
@@ -95,7 +96,11 @@ def read_time():
     data = merge_data(data, selected_data, filepath, selected_solution)
     data = calculate_new_columns(data, selected_data)
     data_listnames, data_colors = match_data_after(selected_data)
+
+    stat_list = calc_statistics(data, selected_data, filepaths_cut)
+
     data = cuting_columns(data, data_listnames)
+    
     time_range = [datetime.strptime(str(min(data["datetime"])), "%Y-%m-%d %H:%M:%S"), datetime.strptime(str(max(data["datetime"])), "%Y-%m-%d %H:%M:%S")]
 
     time_dif = int((time_range[-1] - time_range[0]).days)

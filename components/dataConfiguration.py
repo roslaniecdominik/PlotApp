@@ -1,8 +1,6 @@
 import pandas as pd
 import numpy as np
 
-from components.calculateNewColumns import calculate_new_columns
-
 
 def defining_data():
     

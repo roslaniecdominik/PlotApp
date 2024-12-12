@@ -21,7 +21,7 @@ from components.calculateNewColumns import calculate_new_columns
 
 data_dict, single_scatter, single_plot, triple_plot = defining_data()
 
-def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, filepaths, station_list, selected_station, data, selected_datas, app):
+def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, filepaths, station_list, selected_station, data, selected_datas, app, stat_list):
     global loading_check
     
     
@@ -54,7 +54,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 common = [el for el in selected_datas if el in triple_plot]
                 const = 2 * len(common)
 
-                fig, axs = plt.subplots((len(selected_datas) + const), 1, figsize=(10,6))
+                fig, axs = plt.subplots((len(selected_datas) + const), 1, figsize=(10,10))
                 lines = []
                 scatters_test = []
                 invisible_lines = []
@@ -76,6 +76,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                             line, = ax.plot(cut_data["datetime"], cut_data[layer_name], color=color, linewidth=1, zorder=2)
                             lines.append(line,)
                             legend_elements.append(Line2D([0], [0], color=color, lw=2, label=layer_name))
+                            # ax.set_ylim(cut_data[layer_name].min(), (cut_data[layer_name].max())*1.3)
 
                     elif selected_datas[i] in single_scatter:
                         
@@ -105,7 +106,10 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                         
                         invisible_line, = ax.plot(cut_data["datetime"], invisible_data, color='none')
                         invisible_lines.append(invisible_line)
-             
+                    try:
+                        ax.text(0.01, 0.99, stat_list[i], fontsize=6, color='black', ha='left', va='top', transform=ax.transAxes)
+                    except:
+                        print()
                     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), handles=legend_elements)
                     ax.grid(True, zorder=1)
                     ax.xaxis.set_tick_params(labelbottom=False)
