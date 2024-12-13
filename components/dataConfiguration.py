@@ -20,7 +20,7 @@ def defining_data():
                 ";PRN": "PRN"}
     single_scatter = ["Phase Ambiguity", "Code Residuals", "Phase Residuals", "PRN"]
     single_plot = ["DOP factors", "Ionospheric delay", "Satellite Vehicle", "REC mNEU", "RECm XYZ", "REC dNEU", "Zenith Tropospheric Delay", "Receiver Clock Estimation"]
-    triple_plot = ["REC XYZ", "REC NEU"]
+    triple_plot = ["REC XYZ", "Rec X", "Rec Y", "Rec Z", "REC NEU", "Rec N", "Rec E", "Rec U"]
     return data_dict, single_scatter, single_plot, triple_plot
 
 def match_data_before(data):
@@ -219,8 +219,15 @@ def triple_plot_corrections(data_listnames, data_colors, selected_datas, triple_
     for el in triple_plot:
         if el in selected_datas:
             index = selected_datas.index(el)
-            selected_datas.insert(index, el)
-            selected_datas.insert(index, el)
+
+            if selected_datas[index] == "REC XYZ":
+                selected_datas[index] = "Rec Z"
+                selected_datas.insert(index, "Rec Y")
+                selected_datas.insert(index, "Rec X")
+            elif selected_datas[index] == "REC NEU":
+                selected_datas[index] = "Rec U"
+                selected_datas.insert(index, "Rec E")
+                selected_datas.insert(index, "Rec N")
 
     return new_listname, new_listcolors, selected_datas
 

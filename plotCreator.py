@@ -13,7 +13,7 @@ from components.dataConfiguration import match_data_after, defining_data, data_f
 from components.centerWindow import center_window
 from components.solutionGenerator import solution_generator
 from components.layerButtons import layer_buttons
-from components.xaxisLabel import xaxis_config
+from components.axisLabel import xaxis_config, yaxis_label
 from components.sliderEvent import plot_updater_slider
 from comparingPlotCreator import comparing_window
 from components.calculateNewColumns import calculate_new_columns
@@ -23,7 +23,6 @@ data_dict, single_scatter, single_plot, triple_plot = defining_data()
 
 def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, filepaths, station_list, selected_station, data, selected_datas, app, stat_list):
     global loading_check
-    
     
     start_time = f"{start_year_entry.get()} {start_hour_entry.get()}"
     end_time = f"{end_year_entry.get()} {end_hour_entry.get()}"
@@ -46,11 +45,9 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         start_index = 0
 
         if len(selected_datas) > 0:
-
             def plot(data_listnames, data_colors, selected_datas):
                 if len([item for item in selected_datas if selected_datas.count(item) > 1]) > 0:
                     selected_datas = list(set(selected_datas))
-
                 common = [el for el in selected_datas if el in triple_plot]
                 const = 2 * len(common)
 
@@ -65,7 +62,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
 
                 if selected_datas.count(selected_datas[0]) < 2:
                     data_listnames, data_colors, selected_datas = triple_plot_corrections(data_listnames, data_colors, selected_datas, triple_plot)
-                
+
                 axs = [axs] if not isinstance(axs, np.ndarray) else axs
 
                 i=0
@@ -84,7 +81,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                         shapes = ["s", "x", "+", "^", "o", "D"]
                         
                         for layer_name, color in zip(data_listname, data_color):
-        
+                         
                             if layer_name == data_listname[0]:
                                 invisible_data = [0 for _ in range(cut_data[start_index:].shape[0])]
                                 invisible_data[0] = cut_data[[col for col in cut_data.columns if col.startswith(layer_name[:2])]].min().min()
@@ -93,7 +90,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                             if layer_name in shapes_data:
                                 index = shapes_data.index(layer_name)
                                 scatter = ax.scatter(cut_data["datetime"], cut_data[layer_name], color=color, s=20, zorder=3, marker=shapes[index])
-                                
+                                lines.append(scatter)
                                 legend_elements.append(Line2D([0], [0], marker=shapes[index], color="white", markerfacecolor=color, markersize=10, label=layer_name))
                                 
                             else:
@@ -107,16 +104,21 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                         invisible_line, = ax.plot(cut_data["datetime"], invisible_data, color='none')
                         invisible_lines.append(invisible_line)
                     try:
-                        ax.text(0.01, 0.99, stat_list[i], fontsize=6, color='black', ha='left', va='top', transform=ax.transAxes)
+                        t = ax.text(0.02, 0.99, stat_list[i], fontsize=7, color='black', ha='left', va='bottom', transform=ax.transAxes)
+                        t.set_bbox(dict(facecolor='white', alpha=1, edgecolor='white', pad=0.2, boxstyle="round"))
                     except:
-                        print()
+                        pass
+                    
                     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), handles=legend_elements)
                     ax.grid(True, zorder=1)
                     ax.xaxis.set_tick_params(labelbottom=False)
                     ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
                     ax.ticklabel_format(useOffset=False, axis='y', style='plain')
-                    ax.set_ylabel(selected_datas[i].replace(" ","\n"))
-                    ax.yaxis.set_label_coords(-0.09, 0.5)
+                    ax.set_ylabel(yaxis_label(selected_datas[i]))
+                    if "Rec X" in selected_datas or "Rec N" in selected_datas:
+                        ax.yaxis.set_label_coords(-0.09, 0.5)
+                    else:
+                        ax.yaxis.set_label_coords(-0.06, 0.5)
 
                     i += 1
 
@@ -203,7 +205,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 station_range_text = axs[0].text(-0.1, 1.5, f"{selected_station}, {extend_time}", transform=axs[0].transAxes, va='top', ha='left', fontsize=11)
                 axs[0].text(-0.1, 1.2, '{:>22}'.format('[m]'), transform=axs[0].transAxes, va='top', ha='left', fontsize=10)
                 axs[-1].set_xlabel(xaxis_label, font="Verdana")
-                # fig.sus_adjust(left=0.01)
+
                 fig.tight_layout()
                 
                 invisible_lines = []
@@ -215,7 +217,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         new_window = ctk.CTkToplevel(app)
         new_window.title("PLOT")
 
-        center_window(new_window, 1200, 650)
+        center_window(new_window, 1350, 740)
 
         def stop():
             new_window.attributes("-topmost", False)

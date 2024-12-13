@@ -217,7 +217,6 @@ def plot_updater_slider(value,  lines, axss, data_listnames, canvas_plot, cut_da
                     invisible_data[-1] = cut_data[start_index:][[col for col in cut_data[start_index:].columns if col.startswith(scatter_symbol)]].max().max()
                     invisible_datas.append(invisible_data)
 
-            
             for data_listname, line in zip(data_listnames, lines):
                 if type(axss) == "s":#np.ndarray:
                     if axss.ndim == 1: #one column
@@ -276,5 +275,4 @@ def plot_updater_slider(value,  lines, axss, data_listnames, canvas_plot, cut_da
                             axs.relim()
                             axs.autoscale_view()
                         station_range_text.set_text(f"{selected_station}, {extend_time}")
-
             canvas_plot.draw()

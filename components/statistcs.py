@@ -24,11 +24,11 @@ def calc_statistics(data, selected_datas, filepath):
                 min_values = [data[data_listname].min() for data_listname in data_listnames]
                 max_values = [data[data_listname].max() for data_listname in data_listnames]
                 stat_text_list = []
-                stat_text_list.append(f"max: {' '.join([f'{col}:{mean_values[i]:.2f}' for i, col in enumerate(data_listnames)])}")
+                stat_text_list.append(f"mean: {' '.join([f'{col}:{mean_values[i]:.2f}' for i, col in enumerate(data_listnames)])}")
                 stat_text_list.append(f"min: {' '.join([f"{col}:{min_values[i]:.2f}" for i, col in enumerate(data_listnames)])}")
                 stat_text_list.append(f"max: {' '.join([f"{col}:{max_values[i]:.2f}" for i, col in enumerate(data_listnames)])}")
                 
-                stat_text = "\n".join(stat_text_list)
+                stat_text = ";  ".join(stat_text_list)
                 stat_list.append(stat_text)
             
             if selected_data == "Receiver Clock Estimation" or selected_data == "REC mNEU" or selected_data == "Zenith Tropospheric Delay":
@@ -37,7 +37,7 @@ def calc_statistics(data, selected_datas, filepath):
                 stat_text_list = []
                 for element in data_listnames:
                     stat_text_list.append(f"{element}: \u03BC = {data[element].mean():.3f}   \u03C3 = {np.std(data[element]):.3f}")
-                stat_text = "\n".join(stat_text_list)
+                stat_text = ";  ".join(stat_text_list)
                 stat_list.append(stat_text)
                 
             if selected_data == "REC dNEU" or selected_data == "REC NEU" or selected_data == "REC XYZ":
@@ -57,7 +57,7 @@ def calc_statistics(data, selected_datas, filepath):
                     if selected_data == "REC XYZ" or selected_data == "REC NEU":
                         stat_list.extend([i for i in stat_text_list])
                     else:  
-                        stat_text = "\n".join(stat_text_list)
+                        stat_text = ";  ".join(stat_text_list)
                         stat_list.append(stat_text)
     except:
         stat_list = []
