@@ -2,7 +2,7 @@ import customtkinter as ctk
 import matplotlib.pyplot as plt
 from matplotlib.collections import PathCollection
 from datetime import datetime, timedelta
-
+import pandas as pd
 
 def time_updater (time, year_entry, hour_entry, year_slider, selected_year_label, selected_hour_label, time_dif):
         year_entry.delete(0, ctk.END)
@@ -272,6 +272,8 @@ def plot_updater_slider(value,  lines, axss, data_listnames, canvas_plot, cut_da
                             line.set_data(cut_data['datetime'][start_index:], cut_data[data_listname][start_index:])
 
                         for axs in axss:
+                            axs.set_xlim(cut_data["datetime"][start_index:].min() - 0.01*(cut_data["datetime"].max() - cut_data["datetime"].min()), 
+                                         cut_data["datetime"][start_index:].max() + 0.01*(cut_data["datetime"].max() - cut_data["datetime"].min()))
                             axs.relim()
                             axs.autoscale_view()
                         station_range_text.set_text(f"{selected_station}, {extend_time}")

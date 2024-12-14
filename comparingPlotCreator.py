@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import customtkinter as ctk
-import numpy as np
 import pandas as pd
 
 from matplotlib.ticker import ScalarFormatter
@@ -18,7 +17,7 @@ data_dict, single_scatter, single_plot, triple_plot = defining_data()
 
 def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, cut_data, cut_column, selected_station_solution, error_label, 
                      start_time, end_time, station_list, xaxis_set, xaxis_label, app):
-        
+            print("hi")
             data_listname, data_colors = match_data_after(selected_data)
 
             selected_secondStation_solution = secondStation_menu_fullVar.get()

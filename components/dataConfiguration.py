@@ -220,6 +220,20 @@ def data_filtering(data, data_listnames, data_colors):
         data = data.replace(0, np.nan)
     return data, data_listnames, data_colors
     
+def cutting_columns(dataframe, data_listname, selected_solution):
+    cut_column = []
+    [cut_column.extend(i) for i in data_listname]
+    cut_column.insert(0, "datetime")
+    cut_data = dataframe[cut_column]
+    cut_data = cut_data.copy()
+    cut_data.loc[:, "Sol"] = selected_solution
+    return cut_data
+
+def cutting_rows(dataframe, data_listname):
+    data_listname = [item for sublist in data_listname for item in sublist]
+    data = dataframe.iloc[:dataframe[data_listname].notna().any(axis=1)[::-1].idxmax() + 1]
+
+    return data
 
 def triple_plot_corrections(data_listnames, data_colors, selected_datas, triple_plot):
     new_listname = []

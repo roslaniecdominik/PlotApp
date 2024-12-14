@@ -3,10 +3,11 @@ from datetime import datetime
 from tkinter import filedialog, messagebox
 import threading
 import pandas as pd
+import numpy as np
 
 from components.buttonState import buttonState
 from components.centerWindow import center_window
-from components.dataConfiguration import merge_data, time_column, defining_data, prn_filtering, match_data_after
+from components.dataConfiguration import merge_data, time_column, defining_data, prn_filtering, match_data_after, cutting_columns, cutting_rows
 from components.frames import minmax_frame, sliders_frame, selected_time
 from plotCreator import create_plot
 from components.sliderEvent import year_slider_event, hour_slider_event, time_updater
@@ -49,7 +50,6 @@ def loading_animation():
 
 def create_plot_handler():
     create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, filepaths, station_list, selected_station_solution, data, selected_data, app, stat_list)
-    data_menu.set("...")
 
 def read_time():
     global data, selected_data, filepath, loading_check, time_range, time_dif, selected_solution, stat_list
@@ -71,17 +71,6 @@ def read_time():
                    
     if "Ionospheric delay" not in selected_data and any("IonDel" in _ for _ in filepath):
         filepath = [_ for _ in filepath if "IonDel" not in _]
- 
-
-    def cuting_columns(dataframe, data_listname):
-        cut_column = []
-        [cut_column.extend(i) for i in data_listname]
-        cut_column.insert(0, "datetime")
-
-        cut_data = dataframe[cut_column]
-        cut_data = cut_data.copy()
-        cut_data.loc[:, "Sol"] = selected_solution
-        return cut_data
     
     data = pd.read_csv(filepath[0], sep=';', index_col=False, skipinitialspace=True)
     
@@ -93,11 +82,12 @@ def read_time():
     data = merge_data(data, selected_data, filepath, selected_solution)
     data = calculate_new_columns(data, selected_data)
     data_listnames, data_colors = match_data_after(selected_data)
-
+    data.replace([np.inf, -np.inf], np.nan, inplace=True)
     stat_list = calc_statistics(data, selected_data, filepaths_cut)
-
-    data = cuting_columns(data, data_listnames)
+    data = cutting_columns(data, data_listnames, selected_solution)
+    data = cutting_rows(data, data_listnames)
     
+
     time_range = [datetime.strptime(str(min(data["datetime"])), "%Y-%m-%d %H:%M:%S"), datetime.strptime(str(max(data["datetime"])), "%Y-%m-%d %H:%M:%S")]
 
     time_dif = int((time_range[-1] - time_range[0]).days)
@@ -106,11 +96,11 @@ def read_time():
     max_label_value.configure(text=max(data["datetime"]))
     
 
-    time_updater (time_range[0], start_year_entry, start_hour_entry, start_year_slider, selected_start_label_year,  selected_start_label_hour, time_dif)
+    time_updater(time_range[0], start_year_entry, start_hour_entry, start_year_slider, selected_start_label_year,  selected_start_label_hour, time_dif)
     start_minute = (datetime.strptime(time_range[0].strftime("%H:%M:%S"), "%H:%M:%S")).minute * 2
     start_hour_slider.configure(from_= start_minute, to=24*60*2-1, number_of_steps=24*60*2-1 - start_minute)
 
-    time_updater (time_range[-1], end_year_entry, end_hour_entry, end_year_slider, selected_end_label_year, selected_end_label_hour, time_dif)
+    time_updater(time_range[-1], end_year_entry, end_hour_entry, end_year_slider, selected_end_label_year, selected_end_label_hour, time_dif)
     end_minute = (datetime.strptime(time_range[-1].strftime("%H:%M:%S"), "%H:%M:%S")).minute * 2
     end_hour_slider.configure(from_=0, to=24*60*2-1-end_minute, number_of_steps=24*60*2-1 - end_minute)
 
@@ -155,9 +145,7 @@ def configure_fun():
         data_menu.set("...")
 
     close_button = ctk.CTkButton(menu_window, text="Save", command=save_selection)
-    close_button.pack(pady=10)
-
-    
+    close_button.pack(pady=10)   
 
 def read_data(event):
     global data_dict, loading_check, filepaths_cut, selected_station_solution, value_to_add, selected_solution

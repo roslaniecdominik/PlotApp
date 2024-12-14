@@ -1,7 +1,7 @@
 import customtkinter as ctk
 import matplotlib.pyplot as plt
 import numpy as np
-import time
+import pandas as pd
                 
 from datetime import datetime, timedelta
 from tkinter import messagebox
@@ -11,19 +11,16 @@ from matplotlib.lines import Line2D
 
 from components.dataConfiguration import match_data_after, defining_data, data_filtering, triple_plot_corrections
 from components.centerWindow import center_window
-from components.solutionGenerator import solution_generator
 from components.layerButtons import layer_buttons
 from components.axisLabel import xaxis_config, yaxis_label
 from components.sliderEvent import plot_updater_slider
 from comparingPlotCreator import comparing_window
-from components.calculateNewColumns import calculate_new_columns
-
 
 data_dict, single_scatter, single_plot, triple_plot = defining_data()
 
 def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, filepaths, station_list, selected_station, data, selected_datas, app, stat_list):
     global loading_check
-    
+
     start_time = f"{start_year_entry.get()} {start_hour_entry.get()}"
     end_time = f"{end_year_entry.get()} {end_hour_entry.get()}"
 
@@ -33,12 +30,10 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
     else:
         
         data_listnames, data_colors = match_data_after(selected_datas)
-
         data, data_listnames, data_colors = data_filtering(data, data_listnames, data_colors)
 
         time_data = data.loc[(data['datetime'] >= start_time) & (data['datetime'] <= end_time)]
-        
-        cut_data = time_data
+        cut_data = time_data.reset_index()
         time_diff = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") - datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
 
         xaxis_set, xaxis_label = xaxis_config(time_diff, timedelta)    
@@ -115,6 +110,8 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                     ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
                     ax.ticklabel_format(useOffset=False, axis='y', style='plain')
                     ax.set_ylabel(yaxis_label(selected_datas[i]))
+                    ax.set_xlim(cut_data["datetime"].min() - 0.01*(cut_data["datetime"].max() - cut_data["datetime"].min()), 
+                                cut_data["datetime"].max() + 0.01*(cut_data["datetime"].max() - cut_data["datetime"].min()))
                     
                     if "Rec X" in selected_datas or "Rec N" in selected_datas:
                         ax.yaxis.set_label_coords(-0.09, 0.5)
@@ -292,6 +289,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         if selected_station in station_list:
             secondStation_list = station_list.copy()
             secondStation_list.remove(selected_station)
+            secondStation_list = [item for item in secondStation_list if item.split(" ")[0] == (selected_station.split(" ")[0])]
 
 
         secondStation_label = ctk.CTkLabel(right_frame, text="Compare data \nwith another solution", font=("Helvetica", 16))
@@ -306,7 +304,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
             secondStation_menu.set(shorten_label(event)) 
 
         secondStation_menu_fullVar = ctk.StringVar(right_frame)
-        secondStation_menu_variable = ctk.StringVar(value="Select station ...")
+        secondStation_menu_variable = ctk.StringVar(value="Select solution ...")
         secondStation_menu = ctk.CTkOptionMenu(right_frame, width=150, values=[], variable=secondStation_menu_variable, command=shorten_label)
         secondStation_menu.pack(side=ctk.TOP, pady=(0, 20))
         secondStation_menu.configure(values=secondStation_list)

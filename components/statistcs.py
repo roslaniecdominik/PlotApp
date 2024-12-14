@@ -34,11 +34,13 @@ def calc_statistics(data, selected_datas, filepath):
                     stat_list.append(stat_text)
                 
                 if selected_data == "Receiver Clock Estimation" or selected_data == "REC mNEU" or selected_data == "Zenith Tropospheric Delay":
-                    
+
                     data_listnames = [col for col in data_listnames if not (data[col].isna().all() or (data[col].fillna(0) == 0).all())] #removes if 0/NaN in all
                     stat_text_list = []
+
                     for element in data_listnames:
-                        stat_text_list.append(f"{element}: \u03BC = {data[element].mean():.3f}   \u03C3 = {np.std(data[element]):.3f}")
+                        without_nan = data[element].dropna().tolist()
+                        stat_text_list.append(f"{element}: \u03BC = {np.mean(without_nan):.3f}   \u03C3 = {np.std(without_nan):.3f}")
                     stat_text = ";  ".join(stat_text_list)
                     stat_list.append(stat_text)
                     
