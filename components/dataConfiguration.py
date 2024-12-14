@@ -1,24 +1,36 @@
 import pandas as pd
 import numpy as np
 
+def datasets_dict():
+    data_sets_dict = {
+        "Est set": ["DOP factors", "REC dNEU", "REC mNEU", "Receiver Clock Estimation", "Satellite Vehicle", "Zenith Tropospheric Delay"],
+        "Amb set": ["m Phase Ambiguity", "Phase Ambiguity"],
+        "QC set": ["Code Residuals", "Phase Residuals", "PRN"],
+        "XYZ set": ["REC XYZ", "RECm XYZ"],
+        "NEU set": ["REC NEU", "REC mNEU"]
+    }
+    return data_sets_dict
 
 def defining_data():
     
-    data_dict = {"PDop": "DOP factors", 
-                "RecX": "REC XYZ", 
-                "RecmX": "RECm XYZ",
-                "mIonDel": "Ionospheric delay",
-                "RecN": "REC NEU",
-                "RecE": "REC dNEU",
-                "RecmN": "REC mNEU",
-                "nG": "Satellite Vehicle",
-                "N_L1": "Phase Ambiguity",
-                "ZTD": "Zenith Tropospheric Delay",
-                "RecClkG": "Receiver Clock Estimation",
-                "C_Res1": "Code Residuals",
-                "L_Res1": "Phase Residuals",
-                ";PRN": "PRN"}
-    single_scatter = ["Phase Ambiguity", "Code Residuals", "Phase Residuals", "PRN"]
+    data_dict = {
+        "PDop": "DOP factors", 
+        "RecX": "REC XYZ", 
+        "RecmX": "RECm XYZ",
+        "mIonDel": "Ionospheric delay",
+        "RecN": "REC NEU",
+        "RecE": "REC dNEU",
+        "RecmN": "REC mNEU",
+        "nG": "Satellite Vehicle",
+        "N_L1": "Phase Ambiguity",
+        "mN_L1": "m Phase Ambiguity",
+        "ZTD": "Zenith Tropospheric Delay",
+        "RecClkG": "Receiver Clock Estimation",
+        "C_Res1": "Code Residuals",
+        "L_Res1": "Phase Residuals",
+        ";PRN": "PRN"
+    }
+    single_scatter = ["m Phase Ambiguity", "Phase Ambiguity", "Code Residuals", "Phase Residuals", "PRN"]
     single_plot = ["DOP factors", "Ionospheric delay", "Satellite Vehicle", "REC mNEU", "RECm XYZ", "REC dNEU", "Zenith Tropospheric Delay", "Receiver Clock Estimation"]
     triple_plot = ["REC XYZ", "Rec X", "Rec Y", "Rec Z", "REC NEU", "Rec N", "Rec E", "Rec U"]
     return data_dict, single_scatter, single_plot, triple_plot
@@ -45,6 +57,8 @@ def match_data_before(data):
                 data_listname.append(["RecmN", "RecmE", "RecmU"])
             case "Phase Ambiguity":
                 data_listname.append(["N_IF", "N_L1", "N_L2", "N_L3", "N_L4", "N_L5", "N_L6", "N_L7", "N_L8", "PRN"])
+            case "m Phase Ambiguity":
+                data_listname.append(["mN_L1", "mN_L2", "mN_L3", "mN_L4", "mN_L5", "mN_L6", "mN_L7", "mN_L8", "PRN"])
             case "Zenith Tropospheric Delay":
                 data_listname.append(["ZTD", "mZTD"])
             case "Receiver Clock Estimation":
@@ -90,6 +104,10 @@ def match_data_after(data):
                 data_listname.append(["N_IF GPS", "N_L1 GPS", "N_L2 GPS", "N_L3 GPS", "N_L4 GPS", "N_L5 GPS", "N_L6 GPS", "N_L7 GPS", "N_L8 GPS",
                                       "N_IF Galileo", "N_L1 Galileo", "N_L2 Galileo", "N_L3 Galileo", "N_L4 Galileo", "N_L5 Galileo", "N_L6 Galileo", "N_L7 Galileo", "N_L8 Galileo"])
                 data_colors.append(["limegreen"]*9 + ["dodgerblue"]*9)
+            case "m Phase Ambiguity":
+                data_listname.append(["mN_L1 GPS", "mN_L2 GPS", "mN_L3 GPS", "mN_L4 GPS", "mN_L5 GPS", "mN_L6 GPS", "mN_L7 GPS", "mN_L8 GPS",
+                                      "mN_L1 Galileo", "mN_L2 Galileo", "mN_L3 Galileo", "mN_L4 Galileo", "mN_L5 Galileo", "mN_L6 Galileo", "mN_L7 Galileo", "mN_L8 Galileo"])
+                data_colors.append(["limegreen"]*8 + ["dodgerblue"]*8)
             case "Zenith Tropospheric Delay":
                 data_listname.append(["mZTD+", "mZTD-", "ZTD", "ExZTD"])
                 data_colors.append(["mistyrose", "mistyrose", "red", "brown"])

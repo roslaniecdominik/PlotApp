@@ -26,6 +26,13 @@ def calculate_new_columns(data, selected_datas):
                 data[element] = np.where(data["PRN"] < 40, data[element.split()[0]], np.nan)
             for element in list_Galileo:
                 data[element] = np.where(data["PRN"] > 40, data[element.split()[0]], np.nan)
+        elif selected_data == "m Phase Ambiguity":
+            list_GPS = ["mN_L1 GPS", "mN_L2 GPS", "mN_L3 GPS", "mN_L4 GPS", "mN_L5 GPS", "mN_L6 GPS", "mN_L7 GPS", "mN_L8 GPS"]
+            list_Galileo = ["mN_L1 Galileo", "mN_L2 Galileo", "mN_L3 Galileo", "mN_L4 Galileo", "mN_L5 Galileo", "mN_L6 Galileo", "mN_L7 Galileo", "mN_L8 Galileo"]
+            for element in list_GPS:
+                data[element] = np.where(data["PRN"] < 40, data[element.split()[0]], np.nan)
+            for element in list_Galileo:
+                data[element] = np.where(data["PRN"] > 40, data[element.split()[0]], np.nan)
         elif selected_data == "Code Residuals":
             list_GPS = ["C_Res1 GPS", "C_Res2 GPS", "C_Res3 GPS", "C_Res4 GPS", "C_Res5 GPS", "C_Res6 GPS", "C_Res7 GPS", "C_Res8 GPS", "C_Res_IF GPS"]
             list_Galileo = ["C_Res1 Galileo", "C_Res2 Galileo", "C_Res3 Galileo", "C_Res4 Galileo", "C_Res5 Galileo", "C_Res6 Galileo", "C_Res7 Galileo", "C_Res8 Galileo", "C_Res_IF Galileo"]

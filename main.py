@@ -14,6 +14,7 @@ from components.timeLabelClearing import timeLabelClearing
 from components.solutionGenerator import solution_generator
 from components.calculateNewColumns import calculate_new_columns
 from components.statistcs import calc_statistics
+from components.dataConfiguration import datasets_dict
 
 data_dict = defining_data()
 color_index = 0
@@ -48,16 +49,12 @@ def loading_animation():
 
 def create_plot_handler():
     create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, filepaths, station_list, selected_station_solution, data, selected_data, app, stat_list)
+    data_menu.set("...")
 
 def read_time():
     global data, selected_data, filepath, loading_check, time_range, time_dif, selected_solution, stat_list
 
     show_plot_button.configure(state="disabled")
-
-    try:
-        selected_data = selected_options
-    except:
-        selected_data = [data_menu.get()]
 
     filepath = []
 
@@ -131,6 +128,37 @@ def read_time_in_thread(event):
     app.after(500, loading_animation)
     threading.Thread(target=read_time).start()
 
+def select_set_fun(choice):
+    global selected_data
+
+    selected_data_sets = [choice]
+    data_sets_dict = datasets_dict()
+    selected_data = [item for key in selected_data_sets if key in data_sets_dict for item in data_sets_dict[key]]
+    read_time_in_thread("")
+
+def configure_fun():
+    data_menu.configure
+    selected = {option: ctk.BooleanVar(value=False) for option in value_to_add}
+    menu_window = ctk.CTkToplevel(app)
+    menu_window.title("Options")
+    menu_height = (len(value_to_add)+1) * 30 + 60
+    menu_window.geometry(f"200x{menu_height}")
+
+    for option in value_to_add:
+        checkbox = ctk.CTkCheckBox(menu_window, text=option, variable=selected[option])
+        checkbox.pack(anchor="w", padx=10, pady=5)
+    def save_selection():
+        global selected_data
+        selected_data = [option for option, var in selected.items() if var.get()]
+        read_time_in_thread("")
+        menu_window.destroy()
+        data_menu.set("...")
+
+    close_button = ctk.CTkButton(menu_window, text="Save", command=save_selection)
+    close_button.pack(pady=10)
+
+    
+
 def read_data(event):
     global data_dict, loading_check, filepaths_cut, selected_station_solution, value_to_add, selected_solution
 
@@ -163,8 +191,12 @@ def read_data(event):
     if not prn_filtering(filepaths_cut):
         value_to_add.remove("PRN")
 
+
     value_to_add = sorted(value_to_add, key=str.casefold)
-    data_menu.configure(values=value_to_add)
+
+    data_sets_dict = datasets_dict()
+    data_sets = [key for key, values in data_sets_dict.items() if all(item in value_to_add for item in values)]
+    data_menu.configure(values=data_sets)
 
     optionmenu_var = ctk.StringVar(value="Data..")
     data_menu.configure(variable=optionmenu_var)
@@ -285,7 +317,7 @@ stationData_section.grid_columnconfigure((0, 1, 2), weight=1)
 station_section = ctk.CTkFrame(stationData_section, border_width=0, fg_color="transparent")
 station_section.grid(row=0, column=0, padx=10, sticky="ew")
 
-station_label = ctk.CTkLabel(station_section, text="Select station", font=("Helvetica", 18))
+station_label = ctk.CTkLabel(station_section, text="Select station", font=("Helvetica", 16))
 station_label.pack(side=ctk.TOP, padx=(0,10))
 
 
@@ -298,45 +330,20 @@ station_menu.pack(side=ctk.TOP)
 data_section = ctk.CTkFrame(stationData_section, border_width=0, fg_color="transparent")
 data_section.grid(row=0, column=1, padx=10, sticky="ew")
 
-data_label = ctk.CTkLabel(data_section, text="Select data", font=("Helvetica", 18))
+data_label = ctk.CTkLabel(data_section, text="Select data set", font=("Helvetica", 16))
 data_label.pack(side=ctk.TOP, padx=(0,10))
 
 data_menu_variable = ctk.StringVar(value="...")
-data_menu = ctk.CTkOptionMenu(data_section, width=150, values=[], variable=data_menu_variable, state="disabled", command=read_time_in_thread)
+data_menu = ctk.CTkOptionMenu(data_section, width=150, values=[], variable=data_menu_variable, state="disabled", command=select_set_fun)# command=read_time_in_thread)
 data_menu.pack(side=ctk.TOP)
 
-#-----------------------------
-
-
-def conf_fun():
-
-    selected = {option: ctk.BooleanVar(value=False) for option in value_to_add}
-    menu_window = ctk.CTkToplevel(app)
-    menu_window.title("Options")
-    menu_height = (len(value_to_add)+1) * 30 + 60
-    menu_window.geometry(f"200x{menu_height}")
-    # menu_window.transient(app)
-
-    for option in value_to_add:
-        checkbox = ctk.CTkCheckBox(menu_window, text=option, variable=selected[option])
-        checkbox.pack(anchor="w", padx=10, pady=5)
-    def save_selection():
-        global selected_options
-        selected_options = [option for option, var in selected.items() if var.get()]
-        read_time_in_thread("")
-        menu_window.destroy()
-    # Przycisk do zamknięcia menu i zapisania wyboru
-    close_button = ctk.CTkButton(menu_window, text="Save", command=save_selection)
-    close_button.pack(pady=10)
-    
-#--------------------------------
 
 configure_data_section = ctk.CTkFrame(stationData_section, border_width=0, corner_radius=10, fg_color="transparent")
 configure_data_section.grid(row=0, column=2, padx=10, sticky="ew")
 
-configure_data_label = ctk.CTkLabel(configure_data_section, text="Configure data", font=("Helvetica", 18))
+configure_data_label = ctk.CTkLabel(configure_data_section, text="Customize data set", font=("Helvetica", 16))
 configure_data_label.pack(side=ctk.TOP, padx=(0,10))
-configure_data_button = ctk.CTkButton(configure_data_section, text="Configure", state="disabled", command=conf_fun)
+configure_data_button = ctk.CTkButton(configure_data_section, text="Cuztomize", state="disabled", command=configure_fun)
 configure_data_button.pack(side=ctk.TOP)
 
 

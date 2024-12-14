@@ -197,7 +197,7 @@ def hour_slider_event(id, time, date, year_entry1, year_entry2, hour_entry1, hou
         hour_entry1.insert(0, selected_date)
 
 def plot_updater_slider(value,  lines, axss, data_listnames, canvas_plot, cut_data, station_range_text, selected_station, selected_secondStation_solution, cord_time, cord1, cord2, sol_df, entry):
-            # layer_name = ""
+
             invisible_lines = cord_time
             start_index = int(value)
             extend_time = f"{str(cut_data.iloc[start_index]['datetime'])}  -  {str(cut_data.iloc[-1]['datetime'])}"
@@ -206,7 +206,7 @@ def plot_updater_slider(value,  lines, axss, data_listnames, canvas_plot, cut_da
             entry.delete(0, ctk.END)
             entry.insert(0, cut_data.loc[start_index, "datetime"])
 
-            scatter_symbols = ["C_", "N_", "L_", "PRN"]
+            scatter_symbols = ["mN_", "C_", "N_", "L_", "PRN"]
             invisible_datas = []
             
             for scatter_symbol in scatter_symbols:

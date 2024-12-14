@@ -94,8 +94,10 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                                 legend_elements.append(Line2D([0], [0], marker=shapes[index], color="white", markerfacecolor=color, markersize=10, label=layer_name))
                                 
                             else:
+                                std = cut_data[layer_name] - cut_data[layer_name].mean()
                                 scatter = ax.scatter(cut_data["datetime"], cut_data[layer_name], color=color, s=1, zorder=2)
                                 lines.append(scatter)
+
                                 if "PRN_" in layer_name:
                                     legend_elements.append(Line2D([0], [0], color=color, lw=2, label=layer_name))
                                 else:
@@ -103,11 +105,9 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                         
                         invisible_line, = ax.plot(cut_data["datetime"], invisible_data, color='none')
                         invisible_lines.append(invisible_line)
-                    try:
-                        t = ax.text(0.02, 0.99, stat_list[i], fontsize=7, color='black', ha='left', va='bottom', transform=ax.transAxes)
-                        t.set_bbox(dict(facecolor='white', alpha=1, edgecolor='white', pad=0.2, boxstyle="round"))
-                    except:
-                        pass
+
+                    t = ax.text(0.02, 0.99, stat_list[i], fontsize=7, color='black', ha='left', va='bottom', transform=ax.transAxes)
+                    t.set_bbox(dict(facecolor='white', alpha=1, edgecolor='white', pad=0.2, boxstyle="round"))
                     
                     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), handles=legend_elements)
                     ax.grid(True, zorder=1)
@@ -115,6 +115,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                     ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
                     ax.ticklabel_format(useOffset=False, axis='y', style='plain')
                     ax.set_ylabel(yaxis_label(selected_datas[i]))
+                    
                     if "Rec X" in selected_datas or "Rec N" in selected_datas:
                         ax.yaxis.set_label_coords(-0.09, 0.5)
                     else:
