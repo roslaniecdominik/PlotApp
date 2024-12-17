@@ -52,7 +52,7 @@ def create_plot_handler():
     create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, filepaths, station_list, selected_station_solution, data, selected_data, app, stat_list)
 
 def read_time():
-    global data, selected_data, filepath, loading_check, time_range, time_dif, selected_solution, stat_list
+    global data, selected_data, filepath, loading_check, time_range, time_dif, selected_solution_encoded, stat_list
 
     show_plot_button.configure(state="disabled")
 
@@ -79,12 +79,13 @@ def read_time():
     if "Err" in filepath[0]: #zestaw
         data = data.rename(columns={'PRN': 'PRN_sign'})
 
-    data = merge_data(data, selected_data, filepath, selected_solution)
+    data = merge_data(data, selected_data, filepath)
     data = calculate_new_columns(data, selected_data)
     data_listnames, data_colors = match_data_after(selected_data)
     data.replace([np.inf, -np.inf], np.nan, inplace=True)
     stat_list = calc_statistics(data, selected_data, filepaths_cut)
-    data = cutting_columns(data, data_listnames, selected_solution)
+
+    data = cutting_columns(data, data_listnames, selected_solution_encoded)
     data = cutting_rows(data, data_listnames)
     
 
@@ -148,15 +149,16 @@ def configure_fun():
     close_button.pack(pady=10)   
 
 def read_data(event):
-    global data_dict, loading_check, filepaths_cut, selected_station_solution, value_to_add, selected_solution
+    global data_dict, loading_check, filepaths_cut, selected_station_solution, value_to_add, selected_solution_encoded
 
     show_plot_button.configure(state="disabled")
 
     selected_station_solution = station_menu_fullVAR.get()
     selected_station = selected_station_solution.split(" ")[0]
-    selected_solution = solution_generator(selected_station_solution.split("(")[1].split(")")[0])
-    
-    filepaths_cut = [filepath for filepath in filepaths if selected_station in filepath and selected_solution in filepath]
+    selected_solution = selected_station_solution.split("(")[1].split(")")[0]
+    selected_solution_encoded = solution_generator(selected_solution)
+
+    filepaths_cut = [filepath for filepath in filepaths if selected_station in filepath and selected_solution_encoded in filepath]
 
     
     data_dict, single_scatter, single_plot, triple_plot = defining_data()
@@ -331,7 +333,7 @@ configure_data_section.grid(row=0, column=2, padx=10, sticky="ew")
 
 configure_data_label = ctk.CTkLabel(configure_data_section, text="Customize data set", font=("Helvetica", 16))
 configure_data_label.pack(side=ctk.TOP, padx=(0,10))
-configure_data_button = ctk.CTkButton(configure_data_section, text="Cuztomize", state="disabled", command=configure_fun)
+configure_data_button = ctk.CTkButton(configure_data_section, text="Customize", state="disabled", command=configure_fun)
 configure_data_button.pack(side=ctk.TOP)
 
 

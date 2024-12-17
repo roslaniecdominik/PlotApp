@@ -6,7 +6,7 @@ def datasets_dict():
         "Est set": ["DOP factors", "REC dNEU", "REC mNEU", "Receiver Clock Estimation", "Satellite Vehicle", "Zenith Tropospheric Delay"],
         "Amb set": ["m Phase Ambiguity", "Phase Ambiguity"],
         "QC set": ["Code Residuals", "Phase Residuals", "PRN"],
-        "XYZ set": ["REC XYZ", "RECm XYZ"],
+        "XYZ set": ["REC XYZ", "REC mXYZ"],
         "NEU set": ["REC NEU", "REC mNEU"]
     }
     return data_sets_dict
@@ -16,7 +16,7 @@ def defining_data():
     data_dict = {
         "PDop": "DOP factors", 
         "RecX": "REC XYZ", 
-        "RecmX": "RECm XYZ",
+        "RecmX": "REC mXYZ",
         "mIonDel": "Ionospheric delay",
         "RecN": "REC NEU",
         "RecE": "REC dNEU",
@@ -31,8 +31,8 @@ def defining_data():
         ";PRN": "PRN"
     }
     single_scatter = ["m Phase Ambiguity", "Phase Ambiguity", "Code Residuals", "Phase Residuals", "PRN"]
-    single_plot = ["DOP factors", "Ionospheric delay", "Satellite Vehicle", "REC mNEU", "RECm XYZ", "REC dNEU", "Zenith Tropospheric Delay", "Receiver Clock Estimation"]
-    triple_plot = ["REC XYZ", "Rec X", "Rec Y", "Rec Z", "REC NEU", "Rec N", "Rec E", "Rec U"]
+    single_plot = ["DOP factors", "Ionospheric delay", "Satellite Vehicle", "REC mNEU", "REC mXYZ", "REC dNEU", "Zenith Tropospheric Delay", "Receiver Clock Estimation"]
+    triple_plot = ["REC XYZ", "RecX", "RecY", "RecZ", "REC NEU", "RecN", "RecE", "RecU"]
     return data_dict, single_scatter, single_plot, triple_plot
 
 def match_data_before(data):
@@ -45,7 +45,7 @@ def match_data_before(data):
                 data_listname.append(["nG", "nE", "nR", "nC", "nJ"])
             case "REC XYZ":
                 data_listname.append(["RecX", "RecY", "RecZ"])
-            case "RECm XYZ":
+            case "REC mXYZ":
                 data_listname.append(["RecmX", "RecmY", "RecmZ"])
             case "Ionospheric delay":
                 data_listname.append(["mIonDel"])
@@ -85,7 +85,7 @@ def match_data_after(data):
             case "REC XYZ":
                 data_listname.append(["RecX", "RecY", "RecZ"])
                 data_colors.append(["red", "green", "blue"])
-            case "RECm XYZ":
+            case "REC mXYZ":
                 data_listname.append(["RecmX", "RecmY", "RecmZ"])
                 data_colors.append(["red", "green", "blue"])
             case "Ionospheric delay":
@@ -149,7 +149,7 @@ def time_column(data):
         return data
 
 
-def merge_data(data, selected_data, filepath, selected_station):
+def merge_data(data, selected_data, filepath):
     
     data_listnames = match_data_before(selected_data)
 
@@ -253,13 +253,13 @@ def triple_plot_corrections(data_listnames, data_colors, selected_datas, triple_
             index = selected_datas.index(el)
 
             if selected_datas[index] == "REC XYZ":
-                selected_datas[index] = "Rec Z"
-                selected_datas.insert(index, "Rec Y")
-                selected_datas.insert(index, "Rec X")
+                selected_datas[index] = "RecZ"
+                selected_datas.insert(index, "RecY")
+                selected_datas.insert(index, "RecX")
             elif selected_datas[index] == "REC NEU":
-                selected_datas[index] = "Rec U"
-                selected_datas.insert(index, "Rec E")
-                selected_datas.insert(index, "Rec N")
+                selected_datas[index] = "RecU"
+                selected_datas.insert(index, "RecE")
+                selected_datas.insert(index, "RecN")
 
     return new_listname, new_listcolors, selected_datas
 
