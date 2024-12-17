@@ -16,6 +16,7 @@ from components.solutionGenerator import solution_generator
 from components.calculateNewColumns import calculate_new_columns
 from components.statistcs import calc_statistics
 from components.dataConfiguration import datasets_dict
+from components.choiceLimit import open_options_window
 
 data_dict = defining_data()
 color_index = 0
@@ -57,7 +58,7 @@ def read_time():
     show_plot_button.configure(state="disabled")
 
     filepath = []
-
+    
     for filepath_cut in filepaths_cut:
         for key, value in data_dict.items():
             for selected in selected_data:
@@ -127,27 +128,11 @@ def select_set_fun(choice):
     selected_data = [item for key in selected_data_sets if key in data_sets_dict for item in data_sets_dict[key]]
     read_time_in_thread("")
 
-def configure_fun():
-    data_menu.configure
-    selected = {option: ctk.BooleanVar(value=False) for option in value_to_add}
-    menu_window = ctk.CTkToplevel(app)
-    menu_window.title("Options")
-    menu_height = (len(value_to_add)+1) * 30 + 60
-    menu_window.geometry(f"200x{menu_height}")
-
-    for option in value_to_add:
-        checkbox = ctk.CTkCheckBox(menu_window, text=option, variable=selected[option])
-        checkbox.pack(anchor="w", padx=10, pady=5)
-    def save_selection():
-        global selected_data
-        selected_data = [option for option, var in selected.items() if var.get()]
-        read_time_in_thread("")
-        menu_window.destroy()
-        data_menu.set("...")
-
-    close_button = ctk.CTkButton(menu_window, text="Save", command=save_selection)
-    close_button.pack(pady=10)   
-
+def display_select_options(selected_options):
+    global selected_data
+    selected_data = selected_options
+    read_time_in_thread("")
+  
 def read_data(event):
     global data_dict, loading_check, filepaths_cut, selected_station_solution, value_to_add, selected_solution_encoded
 
@@ -299,7 +284,6 @@ filename_entry.pack(side=ctk.RIGHT, fill=ctk.BOTH, padx=(10,0), expand=True)
 station_fullLabel = ctk.CTkLabel(app, text=" ", font=("Helvetica", 12))
 station_fullLabel.pack(side=ctk.TOP)
 
-
 stationData_section = ctk.CTkFrame(app, border_width=0, fg_color="transparent")
 stationData_section.pack(side=ctk.TOP, fill=ctk.X, padx=55, pady=(5,5))
 stationData_section.grid_columnconfigure((0, 1, 2), weight=1)
@@ -324,7 +308,7 @@ data_label = ctk.CTkLabel(data_section, text="Select data set", font=("Helvetica
 data_label.pack(side=ctk.TOP, padx=(0,10))
 
 data_menu_variable = ctk.StringVar(value="...")
-data_menu = ctk.CTkOptionMenu(data_section, width=150, values=[], variable=data_menu_variable, state="disabled", command=select_set_fun)# command=read_time_in_thread)
+data_menu = ctk.CTkOptionMenu(data_section, width=150, values=[], variable=data_menu_variable, state="disabled", command=select_set_fun)
 data_menu.pack(side=ctk.TOP)
 
 
@@ -333,7 +317,9 @@ configure_data_section.grid(row=0, column=2, padx=10, sticky="ew")
 
 configure_data_label = ctk.CTkLabel(configure_data_section, text="Customize data set", font=("Helvetica", 16))
 configure_data_label.pack(side=ctk.TOP, padx=(0,10))
-configure_data_button = ctk.CTkButton(configure_data_section, text="Customize", state="disabled", command=configure_fun)
+
+configure_data_button = ctk.CTkButton(configure_data_section, text="Customize", state="disabled", 
+                                      command=lambda: open_options_window(on_selections_change=display_select_options, app=app, value_to_add=value_to_add, data_menu=data_menu))
 configure_data_button.pack(side=ctk.TOP)
 
 

@@ -41,10 +41,21 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
         def plot(data_listnames, data_colors, selected_datas):
             if len([item for item in selected_datas if selected_datas.count(item) > 1]) > 0:
                 selected_datas = list(set(selected_datas))
+            
             common = [el for el in selected_datas if el in triple_plot]
             const = 2 * len(common)
+            
+            height_ratios = []
+            for selected_data in selected_datas:
+                if selected_data == "REC XYZ" or selected_data == "REC NEU":
+                    height_ratios.extend([1,1,1])
+                elif selected_data == "PRN" or selected_data == "Phase Ambiguity":
+                    height_ratios.append(2)
+                else:
+                    height_ratios.append(1)
+            
 
-            fig, axs = plt.subplots((len(selected_datas) + const), 1, figsize=(10,10))
+            fig, axs = plt.subplots((len(selected_datas) + const), 1, figsize=(10,10), gridspec_kw={'height_ratios': height_ratios})
             lines = []
             scatters_test = []
             invisible_lines = []
@@ -60,12 +71,13 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
 
             for data_listname, data_color, ax in zip(data_listnames, data_colors, axs):
                 legend_elements = []
+
                 if selected_datas[i] in single_plot or selected_datas[i] in triple_plot:
                     for layer_name, color in zip(data_listname, data_color):
                         line, = ax.plot(cut_data["datetime"], cut_data[layer_name], color=color, linewidth=1, zorder=2)
                         lines.append(line,)
                         legend_elements.append(Line2D([0], [0], color=color, lw=2, label=layer_name))
-                        # ax.set_ylim(cut_data[layer_name].min(), (cut_data[layer_name].max())*1.3)
+                        
                 elif selected_datas[i] in single_scatter:
                     
                     shapes_data = ["Bad IFree", "No Clock", "No Orbit", "Cycle Slips", "Outliers", "Eclipsing"]
@@ -79,9 +91,15 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                             invisible_data[-1] = cut_data[[col for col in cut_data.columns if col.startswith(layer_name[:2])]].max().max()
                         if layer_name in shapes_data:
                             index = shapes_data.index(layer_name)
-                            scatter = ax.scatter(cut_data["datetime"], cut_data[layer_name], color=color, s=20, zorder=3, marker=shapes[index])
+                            
+                            if shapes[index] == "o":
+                                scatter = ax.scatter(cut_data["datetime"], cut_data[layer_name], edgecolors=color, facecolors="none", s=20, zorder=3, marker=shapes[index])
+                                legend_elements.append(Line2D([0], [0], marker=shapes[index], color="white", markeredgecolor=color, markerfacecolor="none", markersize=10, label=layer_name))
+                            else:
+                                scatter = ax.scatter(cut_data["datetime"], cut_data[layer_name], color=color, s=20, zorder=3, marker=shapes[index])
+                                legend_elements.append(Line2D([0], [0], marker=shapes[index], color="white", markerfacecolor=color, markersize=10, label=layer_name))
                             lines.append(scatter)
-                            legend_elements.append(Line2D([0], [0], marker=shapes[index], color="white", markerfacecolor=color, markersize=10, label=layer_name))
+                            
                             
                         else:
                             std = cut_data[layer_name] - cut_data[layer_name].mean()
