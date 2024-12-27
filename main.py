@@ -50,10 +50,36 @@ def loading_animation():
         circle3.configure(fg_color="transparent")
 
 def create_plot_handler():
-    create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, filepaths, station_list, selected_station_solution, data, selected_data, app, stat_list)
+    global data_all_columns
+    
+    if "RecX" in selected_data:
+        cord_index = selected_data.index("RecX")
+        selected_data.remove("RecX")
+        selected_data.remove("RecY")
+        selected_data.remove("RecZ")
+        selected_data.insert(cord_index, "REC XYZ")
+    if "RecN" in selected_data:
+        cord_index = selected_data.index("RecN")
+        selected_data.remove("RecN")
+        selected_data.remove("RecE")
+        selected_data.remove("RecU")
+        selected_data.insert(cord_index, "REC NEU")
+
+    start_time = f"{start_year_entry.get()} {start_hour_entry.get()}"
+    end_time = f"{end_year_entry.get()} {end_hour_entry.get()}"
+    time_data = data_all_columns.loc[(data_all_columns['datetime'] >= start_time) & (data_all_columns['datetime'] <= end_time)]
+    data_time = time_data.reset_index(drop=True)
+    data_listnames = match_data_after(selected_data, selected_solution)
+
+    data_time.replace([np.inf, -np.inf], np.nan, inplace=True)
+    stat_list = calc_statistics(data_time, selected_data, filepaths_cut)
+    
+    data = cutting_columns(data_time, data_listnames, selected_solution_encoded)
+    data = cutting_rows(data, data_listnames)    
+    create_plot(start_time, end_time, filepaths, station_list, selected_station_solution, data, selected_data, app, stat_list, selected_solution)
 
 def read_time():
-    global data, selected_data, filepath, loading_check, time_range, time_dif, selected_solution_encoded, stat_list
+    global data_all_columns, selected_data, filepath, loading_check, time_range, time_dif, selected_solution_encoded, stat_list
 
     show_plot_button.configure(state="disabled")
 
@@ -69,33 +95,35 @@ def read_time():
                             if filepath_cut not in filepath:
                                 if "Eztd" not in filepath_cut:
                                     filepath.append(filepath_cut)
+                        elif value == "PRN" and "AvailablePRNs" in first_row:
+                            filepath.append(filepath_cut)
                    
     if "Ionospheric delay" not in selected_data and any("IonDel" in _ for _ in filepath):
         filepath = [_ for _ in filepath if "IonDel" not in _]
     
-    data = pd.read_csv(filepath[0], sep=';', index_col=False, skipinitialspace=True)
+    data_all_columns = pd.read_csv(filepath[0], sep=';', index_col=False, skipinitialspace=True)
     
-    data = time_column(data)
+    data_all_columns = time_column(data_all_columns)
   
     if "Err" in filepath[0]: #zestaw
-        data = data.rename(columns={'PRN': 'PRN_sign'})
+        data_all_columns = data_all_columns.rename(columns={'PRN': 'PRN_sign'})
 
-    data = merge_data(data, selected_data, filepath)
-    data = calculate_new_columns(data, selected_data)
-    data_listnames, data_colors = match_data_after(selected_data)
-    data.replace([np.inf, -np.inf], np.nan, inplace=True)
-    stat_list = calc_statistics(data, selected_data, filepaths_cut)
-
-    data = cutting_columns(data, data_listnames, selected_solution_encoded)
-    data = cutting_rows(data, data_listnames)
-    
-
-    time_range = [datetime.strptime(str(min(data["datetime"])), "%Y-%m-%d %H:%M:%S"), datetime.strptime(str(max(data["datetime"])), "%Y-%m-%d %H:%M:%S")]
+    data_all_columns = merge_data(data_all_columns, selected_data, filepath)
+    if "Phase Ambiguity" in selected_data:
+        def normalize_by_first_value(dataframe, group_col, value_cols):
+            dataframe.columns = dataframe.columns.str.strip()
+            df_out = dataframe.copy()
+            for col in value_cols:
+                df_out[col] = dataframe.groupby(group_col)[col].transform(lambda grp: grp - grp.iloc[0])
+            return df_out
+        data_all_columns = normalize_by_first_value(data_all_columns, "PRN", ["N_IF", "N_L1", "N_L2", "N_L3", "N_L4", "N_L5", "N_L6", "N_L7", "N_L8"])
+    data_all_columns = calculate_new_columns(data_all_columns, selected_data, selected_solution, filepaths_cut)
+    time_range = [datetime.strptime(str(min(data_all_columns["datetime"])), "%Y-%m-%d %H:%M:%S"), datetime.strptime(str(max(data_all_columns["datetime"])), "%Y-%m-%d %H:%M:%S")]
 
     time_dif = int((time_range[-1] - time_range[0]).days)
 
-    min_label_value.configure(text=min(data["datetime"]))
-    max_label_value.configure(text=max(data["datetime"]))
+    min_label_value.configure(text=min(data_all_columns["datetime"]))
+    max_label_value.configure(text=max(data_all_columns["datetime"]))
     
 
     time_updater(time_range[0], start_year_entry, start_hour_entry, start_year_slider, selected_start_label_year,  selected_start_label_hour, time_dif)
@@ -126,6 +154,7 @@ def select_set_fun(choice):
     selected_data_sets = [choice]
     data_sets_dict = datasets_dict()
     selected_data = [item for key in selected_data_sets if key in data_sets_dict for item in data_sets_dict[key]]
+
     read_time_in_thread("")
 
 def display_select_options(selected_options):
@@ -134,7 +163,7 @@ def display_select_options(selected_options):
     read_time_in_thread("")
   
 def read_data(event):
-    global data_dict, loading_check, filepaths_cut, selected_station_solution, value_to_add, selected_solution_encoded
+    global data_dict, loading_check, filepaths_cut, selected_station_solution, value_to_add, selected_solution, selected_solution_encoded
 
     show_plot_button.configure(state="disabled")
 

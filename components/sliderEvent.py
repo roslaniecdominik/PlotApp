@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 from matplotlib.collections import PathCollection
 from datetime import datetime, timedelta
 
+from components.dataConfiguration import transform_numbers_column
+
 def time_updater (time, year_entry, hour_entry, year_slider, selected_year_label, selected_hour_label, time_dif):
         year_entry.delete(0, ctk.END)
         year_entry.insert(0, time.strftime("%Y-%m-%d"))
@@ -195,7 +197,7 @@ def hour_slider_event(id, time, date, year_entry1, year_entry2, hour_entry1, hou
         hour_entry1.delete(0, ctk.END)
         hour_entry1.insert(0, selected_date)
 
-def plot_updater_slider(value, lines, axss, data_listnames, canvas_plot, cut_data, station_range_text, selected_station, solutions, invisible_lines, cord1, cord2, sol_df, entry):
+def plot_updater_slider(value, lines, axss, data_listnames, canvas_plot, cut_data, station_range_text, selected_station, solutions, invisible_lines, selected_secondStation, cord2, sol_df, entry):
 
             start_index = int(value)
             extend_time = f"{str(cut_data.iloc[start_index]['datetime'])}  -  {str(cut_data.iloc[-1]['datetime'])}"
@@ -235,7 +237,7 @@ def plot_updater_slider(value, lines, axss, data_listnames, canvas_plot, cut_dat
                         invisible_lines[0].set_data(inv_x, inv_y)
                         axss.relim()
                         axss.autoscale_view()
-                        station_range_text.set_text(f"{selected_station} vs {"selected_secondStation_solution"}      {extend_time}")
+                        station_range_text.set_text(f"{selected_station} vs {selected_secondStation}      {extend_time}")
                         break
 
                     elif axss.ndim == 2: #two columns
@@ -259,11 +261,17 @@ def plot_updater_slider(value, lines, axss, data_listnames, canvas_plot, cut_dat
                             axs[0].autoscale_view()
                             axs[1].relim()
                             axs[1].autoscale_view()
-                        station_range_text.set_text(f"{selected_station} vs {"selected_secondStation_solution"}      {extend_time}")
+                        station_range_text.set_text(f"{selected_station} vs {selected_secondStation}      {extend_time}")
                     
                 else:
                     if isinstance(line, PathCollection):
-                        line.set_offsets(list(zip(cut_data['datetime'][start_index:], cut_data[data_listname][start_index:])))
+                        if data_listname == "AvailablePRNs":
+                            data_avPRN = transform_numbers_column(cut_data)
+                            datetime = cut_data["datetime"][start_index]
+                            index_datetime = data_avPRN[data_avPRN["datetime"] == datetime].index[0]
+                            line.set_offsets(list(zip(cut_data['datetime'][start_index:], data_avPRN[data_listname][index_datetime:])))
+                        else:    
+                            line.set_offsets(list(zip(cut_data['datetime'][start_index:], cut_data[data_listname][start_index:])))
                         for invisible_line, invisible_data in zip(invisible_lines, invisible_datas):
                             invisible_line.set_data(cut_data['datetime'][start_index:], invisible_data)
                     elif isinstance(line, plt.Line2D):

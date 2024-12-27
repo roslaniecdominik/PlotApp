@@ -40,7 +40,7 @@ def selected_time (parent, text):
     label_time.pack(side=ctk.RIGHT, fill=ctk.X, padx=(15,0))
     return label_date, label_time
 
-def plot_frames(fig, plot_frame, layers_frame, toolbar_slider_frame, data_merged, lines, axs, data_listname, station_range_text, selected_station, solutions, invisible_lines, sol_df, entry):
+def plot_frames(fig, plot_frame, layers_frame, toolbar_slider_frame, data_merged, lines, axs, data_listname, station_range_text, selected_station, selected_secondStation, solutions, invisible_lines, sol_df, entry):
     
     start_index = 0
     canvas_plot = FigureCanvasTkAgg(fig, plot_frame)
@@ -66,7 +66,7 @@ def plot_frames(fig, plot_frame, layers_frame, toolbar_slider_frame, data_merged
         if (sol_df['datetime'] == entry.get()).any():
             value = sol_df[sol_df['datetime'] == entry.get()].index[0]
             data_slider.set(value)
-            plot_updater_slider(value, lines, axs, data_listname, canvas_plot, data_merged, station_range_text, selected_station, solutions, invisible_lines, "single_scatter", "selected_datas", sol_df, entry)
+            plot_updater_slider(value, lines, axs, data_listname, canvas_plot, data_merged, station_range_text, selected_station, solutions, invisible_lines, selected_secondStation, "selected_datas", sol_df, entry)
         else:
             entry.delete(0, ctk.END)
             default_color = entry.cget("text_color")
@@ -87,7 +87,7 @@ def plot_frames(fig, plot_frame, layers_frame, toolbar_slider_frame, data_merged
     entry.insert(0, sol_df.loc[start_index, "datetime"])
     entry.bind("<Return>", entry_event)
     
-    data_slider = ctk.CTkSlider(toolbar_slider_frame_on, from_=0, to=len(sol_df)-1, number_of_steps=len(sol_df)-1, width=700, height=20, command=lambda value: plot_updater_slider(value, lines, axs, data_listname, canvas_plot, data_merged, station_range_text, selected_station, solutions, invisible_lines, "cord1", "cord2", sol_df, entry))
+    data_slider = ctk.CTkSlider(toolbar_slider_frame_on, from_=0, to=len(sol_df)-1, number_of_steps=len(sol_df)-1, width=700, height=20, command=lambda value: plot_updater_slider(value, lines, axs, data_listname, canvas_plot, data_merged, station_range_text, selected_station, solutions, invisible_lines, selected_secondStation, "cord2", sol_df, entry))
     data_slider.set(start_index)
     data_slider.pack(side="right", expand=True, padx=5)
 

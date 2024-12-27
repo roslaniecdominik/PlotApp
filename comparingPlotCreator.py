@@ -19,7 +19,7 @@ data_dict, single_scatter, single_plot, triple_plot = defining_data()
 
 def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, firstData, selected_station_solution, error_label, 
                      start_time, end_time, station_list, xaxis_set, xaxis_label, app):
-            
+
             selected_data = ["REC NEU" if item in ['RecN', 'RecE', 'RecU'] else item for item in selected_data]
             selected_data = ["REC XYZ" if item in ['RecX', 'RecY', 'RecZ'] else item for item in selected_data]
             selected_data = list(dict.fromkeys(selected_data))
@@ -84,7 +84,7 @@ def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, first
                     secondData = pd.read_csv(filepath[0], sep=';', index_col=False, skipinitialspace=True)
                     secondData = time_column(secondData)
                     secondData = merge_data(secondData, selected_data, filepath)
-                    secondData = calculate_new_columns(secondData, selected_data)
+                    secondData = calculate_new_columns(secondData, selected_data, solutions, filepath)
                     secondData.replace([np.inf, -np.inf], np.nan, inplace=True)
                     secondData = cutting_columns(secondData, data_listnames, selected_secondSolution)
                     secondData = cutting_rows(secondData, data_listnames)
@@ -126,7 +126,7 @@ def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, first
                 toolbar_widget = None
                 layers_widget = None
 
-                data_listnames, data_colors = match_data_after(selected_data)
+                data_listnames = match_data_after(selected_data, solutions)
                 data_listnames = [item for sublist in data_listnames for item in sublist]
                 data_colors = ["red", "green", "blue"]
                 diff_df = difference_dataframe(data_merged, data_listnames, solutions).reset_index(drop=True)
@@ -225,7 +225,7 @@ def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, first
 
                     fig.subplots_adjust(left=0.099,right=0.98, hspace=0.4, wspace=0.2)
                     invisible_lines = []
-                    layers_widget, canvas_widget, toolbar_widget = plot_frames(fig, plot_frame, layers_frame, toolbar_slider_frame, data_merged, lines, axs, data_listnames, station_range_text, selected_station_solution, solutions, invisible_lines, diff_df, "entry")
+                    layers_widget, canvas_widget, toolbar_widget = plot_frames(fig, plot_frame, layers_frame, toolbar_slider_frame, data_merged, lines, axs, data_listnames, station_range_text, selected_station_solution, selected_secondStation_solution, solutions, invisible_lines, diff_df, "entry")
                     layer_buttons_comp(axs, layers_widget)
                 
                 def plot_ground(plot_frame, layers_frame):
@@ -264,7 +264,7 @@ def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, first
 
    
 
-                    layers_widget, canvas_widget, toolbar_widget = plot_frames(fig, plot_frame, layers_frame, toolbar_slider_frame, data_merged, lines, axs, data_listnames[:2], station_range_text, selected_station_solution, solutions, invisible_lines, diff_df, "entry")
+                    layers_widget, canvas_widget, toolbar_widget = plot_frames(fig, plot_frame, layers_frame, toolbar_slider_frame, data_merged, lines, axs, data_listnames[:2], station_range_text, selected_station_solution, selected_secondStation_solution, solutions, invisible_lines, diff_df, "entry")
                     
                     def layer_buttons_ground(solutions, layers_frame_on, data_listnames, ax, colors):
                         def toggle_visibility(name):

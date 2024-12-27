@@ -1,50 +1,67 @@
 import numpy as np
-def calculate_new_columns(data, selected_datas):
+import pandas as pd
+
+def new_columns_solutions(data_list, solutions, data):
+                solution_list = [solution.strip() for solution in solutions.split(",")]
+
+                solution_ranges = {}
+                for i, solution in enumerate(solution_list):
+                    solution_ranges[solution] = range(i*50+1, i*50+50)
+                if "PRN" in data_list:
+                     for solution, num_range in solution_ranges.items():
+                        for element in data_list:
+                            data[f"{element}_{solution}"] = data[element].where(data["PRN"].isin(num_range))
+                else:
+                    for solution, num_range in solution_ranges.items():
+                        for element in data_list:
+                            data[f"{element} {solution}"] = data[element].where(data["PRN"].isin(num_range))
+                return data
+
+def calculate_new_columns(data, selected_datas, solutions, filepath):
     for selected_data in selected_datas:
         if selected_data == "Satellite Vehicle":
             data["nGNSS"] = data["nE"] + data["nG"] + data["nR"] + data["nC"] + data["nJ"] + data["nS"]
+        
         elif selected_data == "REC dNEU":
-            data["RecdN"] = data["RecN"] - data["RecN"].mean()
-            data["RecdE"] = data["RecE"] - data["RecE"].mean()
-            data["RecdU"] = data["RecU"] - data["RecU"].mean()
+            inf_filepath = list(filter(lambda x: "Inf" in x, filepath))
+            if inf_filepath:
+                inf_data = pd.read_csv(inf_filepath[0], sep=';', index_col=False, skipinitialspace=True)
+                data["RecdN"] = data["RecN"] - inf_data["RefN"].mean()
+                data["RecdE"] = data["RecE"] - inf_data["RefE"].mean()
+                data["RecdU"] = data["RecU"] - inf_data["RefU"].mean()
+        
+        elif selected_data == "REC dXYZ":
+            data["RecdX"] = data["RecX"] - data["RecX"].mean()
+            data["RecdY"] = data["RecY"] - data["RecY"].mean()
+            data["RecdZ"] = data["RecZ"] - data["RecZ"].mean()
+            
         elif selected_data == "Zenith Tropospheric Delay":
             data["mZTD+"] = data["ZTD"] + data["mZTD"]
             data["mZTD-"] = data["ZTD"] - data["mZTD"]
         elif selected_data == "PRN":
-            data["PRN_GPS"] = data["PRN"].apply(lambda x: x if x < 40 else np.nan)
-            data["PRN_Galileo"] = data["PRN"].apply(lambda x: x if x > 40 else np.nan)
+            data_list = ["PRN"]
+            data = new_columns_solutions(data_list, solutions, data)
             data["Bad IFree"] = np.where(data["Typ"] == "BIF", data["PRN_sign"], np.nan)
             data["No Clock"] = np.where(data["Typ"] == "NCL", data["PRN_sign"], np.nan)
             data["No Orbit"] = np.where(data["Typ"] == "NOR", data["PRN_sign"], np.nan)
             data["Cycle Slips"] = np.where(data["Typ"] == "CSL", data["PRN_sign"], np.nan)
             data["Outliers"] = np.where(data["Typ"] == "OUT", data["PRN_sign"], np.nan)
             data["Eclipsing"] = np.where(data["Typ"] == "ECL", data["PRN_sign"], np.nan)
+        
         elif selected_data == "Phase Ambiguity":
-            list_GPS = ["N_IF GPS", "N_L1 GPS", "N_L2 GPS", "N_L3 GPS", "N_L4 GPS", "N_L5 GPS", "N_L6 GPS", "N_L7 GPS", "N_L8 GPS"]
-            list_Galileo = ["N_IF Galileo", "N_L1 Galileo", "N_L2 Galileo", "N_L3 Galileo", "N_L4 Galileo", "N_L5 Galileo", "N_L6 Galileo", "N_L7 Galileo", "N_L8 Galileo"]
-            for element in list_GPS:
-                data[element] = np.where(data["PRN"] < 40, data[element.split()[0]], np.nan)
-            for element in list_Galileo:
-                data[element] = np.where(data["PRN"] > 40, data[element.split()[0]], np.nan)
+            data_list = ["N_IF", "N_L1", "N_L2", "N_L3", "N_L4", "N_L5", "N_L6", "N_L7", "N_L8"]
+            data = new_columns_solutions(data_list, solutions, data)
+
         elif selected_data == "m Phase Ambiguity":
-            list_GPS = ["mN_L1 GPS", "mN_L2 GPS", "mN_L3 GPS", "mN_L4 GPS", "mN_L5 GPS", "mN_L6 GPS", "mN_L7 GPS", "mN_L8 GPS"]
-            list_Galileo = ["mN_L1 Galileo", "mN_L2 Galileo", "mN_L3 Galileo", "mN_L4 Galileo", "mN_L5 Galileo", "mN_L6 Galileo", "mN_L7 Galileo", "mN_L8 Galileo"]
-            for element in list_GPS:
-                data[element] = np.where(data["PRN"] < 40, data[element.split()[0]], np.nan)
-            for element in list_Galileo:
-                data[element] = np.where(data["PRN"] > 40, data[element.split()[0]], np.nan)
+            data_list = ["mN_L1", "mN_L2", "mN_L3", "mN_L4", "mN_L5", "mN_L6", "mN_L7", "mN_L8"]
+            data = new_columns_solutions(data_list, solutions, data)
+        
         elif selected_data == "Code Residuals":
-            list_GPS = ["C_Res1 GPS", "C_Res2 GPS", "C_Res3 GPS", "C_Res4 GPS", "C_Res5 GPS", "C_Res6 GPS", "C_Res7 GPS", "C_Res8 GPS", "C_Res_IF GPS"]
-            list_Galileo = ["C_Res1 Galileo", "C_Res2 Galileo", "C_Res3 Galileo", "C_Res4 Galileo", "C_Res5 Galileo", "C_Res6 Galileo", "C_Res7 Galileo", "C_Res8 Galileo", "C_Res_IF Galileo"]
-            for element in list_GPS:
-                data[element] = np.where(data["PRN"] < 40, data[element.split()[0]], np.nan)
-            for element in list_Galileo:
-                data[element] = np.where(data["PRN"] > 40, data[element.split()[0]], np.nan)
+            data_list = ["C_Res1", "C_Res2", "C_Res3", "C_Res4", "C_Res5", "C_Res6", "C_Res7", "C_Res8", "C_Res_IF"]
+            data = new_columns_solutions(data_list, solutions, data)
+            data["C_Res1 GPS"] = data["C_Res2 GPS"] - data["C_Res1 GPS"]
         elif selected_data == "Phase Residuals":
-            list_GPS = ["L_Res1 GPS", "L_Res2 GPS", "L_Res3 GPS", "L_Res4 GPS", "L_Res5 GPS", "L_Res6 GPS", "L_Res7 GPS", "L_Res8 GPS", "L_Res_IF GPS"]
-            list_Galileo = ["L_Res1 Galileo", "L_Res2 Galileo", "L_Res3 Galileo", "L_Res4 Galileo", "L_Res5 Galileo", "L_Res6 Galileo", "L_Res7 Galileo", "L_Res8 Galileo", "L_Res_IF Galileo"]
-            for element in list_GPS:
-                data[element] = np.where(data["PRN"] < 40, data[element.split()[0]], np.nan)
-            for element in list_Galileo:
-                data[element] = np.where(data["PRN"] > 40, data[element.split()[0]], np.nan)
+            data_list = ["L_Res1", "L_Res2", "L_Res3", "L_Res4", "L_Res5", "L_Res6", "L_Res7", "L_Res8", "L_Res_IF"]
+            data = new_columns_solutions(data_list, solutions, data)
+
     return data

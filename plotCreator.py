@@ -2,6 +2,7 @@ import customtkinter as ctk
 import matplotlib.pyplot as plt
 import numpy as np
 import re
+import pandas as pd
                 
 from datetime import datetime, timedelta
 from tkinter import messagebox
@@ -9,7 +10,7 @@ from matplotlib.ticker import ScalarFormatter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.lines import Line2D
 
-from components.dataConfiguration import match_data_after, defining_data, data_filtering, triple_plot_corrections
+from components.dataConfiguration import match_data_after, defining_data, data_filtering, triple_plot_corrections, match_color, transform_numbers_column
 from components.centerWindow import center_window
 from components.layerButtons import layer_buttons
 from components.axisLabel import xaxis_config, yaxis_label
@@ -18,20 +19,18 @@ from comparingPlotCreator import comparing_window
 
 data_dict, single_scatter, single_plot, triple_plot = defining_data()
 
-def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_entry, filepaths, station_list, selected_station, data, selected_datas, app, stat_list):
+def create_plot(start_time, end_time, filepaths, station_list, selected_station, cut_data, selected_datas, app, stat_list, selected_solution):
     global loading_check
-
-    start_time = f"{start_year_entry.get()} {start_hour_entry.get()}"
-    end_time = f"{end_year_entry.get()} {end_hour_entry.get()}"
 
     if start_time > end_time:
         messagebox.showinfo("Message", "Starting time must be less than end time")
 
     else:
-        data_listnames, data_colors = match_data_after(selected_datas)
-        data, data_listnames, data_colors = data_filtering(data, data_listnames, data_colors)
-        time_data = data.loc[(data['datetime'] >= start_time) & (data['datetime'] <= end_time)]
-        cut_data = time_data.reset_index(drop=True)
+        data_listnames = match_data_after(selected_datas, selected_solution)
+        cut_data, data_listnames = data_filtering(cut_data, data_listnames)
+
+        data_colors = match_color(selected_datas, data_listnames)
+        
         time_diff = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S") - datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
 
         xaxis_set, xaxis_label = xaxis_config(time_diff, timedelta)    
@@ -39,13 +38,12 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
 
 
         def plot(data_listnames, data_colors, selected_datas):
-            if len([item for item in selected_datas if selected_datas.count(item) > 1]) > 0:
-                selected_datas = list(set(selected_datas))
-            
+
             common = [el for el in selected_datas if el in triple_plot]
             const = 2 * len(common)
-            
+
             height_ratios = []
+
             for selected_data in selected_datas:
                 if selected_data == "REC XYZ" or selected_data == "REC NEU":
                     height_ratios.extend([1,1,1])
@@ -63,7 +61,7 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                 if selected_datas in single_plot:
                     axs = [axs]
             if selected_datas.count(selected_datas[0]) < 2:
-                data_listnames, data_colors, selected_datas = triple_plot_corrections(data_listnames, data_colors, selected_datas, triple_plot)
+                data_listnames, data_colorse, selected_datas = triple_plot_corrections(data_listnames, "", selected_datas, triple_plot)
 
 
             axs = [axs] if not isinstance(axs, np.ndarray) else axs
@@ -85,24 +83,31 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                     
                     for layer_name, color in zip(data_listname, data_color):
                      
-                        if layer_name == data_listname[0]:
+                        
+                        if layer_name == data_listname[1]:
                             invisible_data = [0 for _ in range(cut_data[start_index:].shape[0])]
                             invisible_data[0] = cut_data[[col for col in cut_data.columns if col.startswith(layer_name[:2])]].min().min()
                             invisible_data[-1] = cut_data[[col for col in cut_data.columns if col.startswith(layer_name[:2])]].max().max()
-                        if layer_name in shapes_data:
+                        
+                        if layer_name == "AvailablePRNs":
+                            data_avPRN = transform_numbers_column(cut_data)
+                            
+                            scatter = ax.scatter(data_avPRN["datetime"], data_avPRN[layer_name], color=color, s=1, zorder=2)
+                            lines.append(scatter)
+                            legend_elements.append(Line2D([0], [0], color=color, lw=2, label=layer_name))
+                        elif layer_name in shapes_data:
                             index = shapes_data.index(layer_name)
                             
                             if shapes[index] == "o":
                                 scatter = ax.scatter(cut_data["datetime"], cut_data[layer_name], edgecolors=color, facecolors="none", s=20, zorder=3, marker=shapes[index])
-                                legend_elements.append(Line2D([0], [0], marker=shapes[index], color="white", markeredgecolor=color, markerfacecolor="none", markersize=10, label=layer_name))
+                                legend_elements.append(Line2D([0], [0], marker=shapes[index], color="white", markeredgecolor=color, markerfacecolor="none", markersize=7, label=layer_name))
                             else:
                                 scatter = ax.scatter(cut_data["datetime"], cut_data[layer_name], color=color, s=20, zorder=3, marker=shapes[index])
                                 legend_elements.append(Line2D([0], [0], marker=shapes[index], color="white", markerfacecolor=color, markersize=10, label=layer_name))
                             lines.append(scatter)
                             
-                            
                         else:
-                            std = cut_data[layer_name] - cut_data[layer_name].mean()
+
                             scatter = ax.scatter(cut_data["datetime"], cut_data[layer_name], color=color, s=1, zorder=2)
                             lines.append(scatter)
                             if "PRN_" in layer_name:
@@ -129,7 +134,9 @@ def create_plot(start_year_entry, start_hour_entry, end_year_entry, end_hour_ent
                     ax.yaxis.set_label_coords(-0.09, 0.5)
                 else:
                     ax.yaxis.set_label_coords(-0.06, 0.5)
+            
                 i += 1
+            
             axs[-1].xaxis.set_tick_params(labelbottom=True)
             axs[-1].xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter(xaxis_set))
             
