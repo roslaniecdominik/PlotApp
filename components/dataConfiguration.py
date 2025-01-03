@@ -158,7 +158,7 @@ def match_color(data, data_listnames):
             case "DOP factors":
                 data_colors.append(["red", "green", "blue", "yellow", "orange"])
             case "Satellite Vehicle":
-                data_colors.append(["black", "limegreen", "dodgerblue", "red", "orange", "yellow"])
+                data_colors.append(["black", "limegreen", "dodgerblue", "salmon", "deeppink", "gold", "darkcyan"])
             case "REC XYZ":
                 data_colors.append(["red"])
                 data_colors.append(["green"])
@@ -182,21 +182,22 @@ def match_color(data, data_listnames):
             case "Zenith Tropospheric Delay":
                 data_colors.append(["mistyrose", "mistyrose", "red", "brown"])
             case "Receiver Clock Estimation":
-                data_colors.append(["limegreen", "dodgerblue", "red", "black", "orange", "blue"])
+                data_colors.append(["limegreen", "dodgerblue", "salmon", "deeppink", "gold", "darkcyan"])
             case "Code Residuals":
                 data_colors.append(generate_shades(data_listname))
             case "Phase Residuals":
                 data_colors.append(generate_shades(data_listname))
             case "PRN":
                 color_list = []
+                prn_colors = ["limegreen", "dodgerblue", "salmon", "deeppink", "gold", "darkcyan"]
+                i = 0
                 for layer in data_listname:
+                    if "PRN_" in layer:
+                        color_list.append(prn_colors[i])
+                        i += 1
                     match layer:
                         case "AvailablePRNs":
                             color_list.append("black")
-                        case "PRN_GPS":
-                            color_list.append("limegreen")
-                        case "PRN_GALILEO":
-                            color_list.append("dodgerblue")
                         case "Bad IFree":
                             color_list.append("pink")
                         case "No Clock":
@@ -312,7 +313,6 @@ def merge_data(data, selected_data, filepath):
 
 
 def data_filtering(data, data_listnames):
-
     for j in range(len(data_listnames)):
 
         index_to_del = [i for i, col in enumerate(data_listnames[j]) if data[col].replace(0, np.nan).isna().all()]
@@ -321,8 +321,9 @@ def data_filtering(data, data_listnames):
         data = data.drop(columns=columns_to_del)
         
         for i in sorted(index_to_del, reverse=True): del data_listnames[j][i]
-        # for i in sorted(index_to_del, reverse=True): del data_colors[j][i]
+ 
         data = data.replace(0, np.nan)
+
     return data, data_listnames
     
 def cutting_columns(dataframe, data_listname, selected_solution):

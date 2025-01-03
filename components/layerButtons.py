@@ -9,6 +9,7 @@ def layer_buttons(fig, axs, data_listnames, layers_frame, data_colors):
         plt.draw()
 
     for data_listname, data_color, ax in zip(data_listnames, data_colors, axs):
+
         for i, layer_name in enumerate(data_listname):
 
             if type(ax) != np.ndarray and any(isinstance(coll, PathCollection) for coll in ax.collections):

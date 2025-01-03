@@ -28,13 +28,17 @@ def xaxis_config (time_diff, timedelta):
 
 def yaxis_label(selected_data):
     m_list = ["RECm XYZ", "REC dNEU", "REC mNEU", "Zenith Tropospheric Delay", "Receiver Clock Estimation", "Code Residuals", "Phase Residuals", "Ionospheric delay"]
-    cycles_list = ["Phase Ambiguity"]
+    cycles_list = ["Phase Ambiguity", "m Phase Ambiguity"]
 
     # selected_data = re.sub(r" (?!.* )", "\n", selected_data)
     if selected_data in m_list:
         selected_data_unit = ((re.sub(r" (?!.* )", "\n", selected_data)) + " [m]")
     elif selected_data in cycles_list:
-        selected_data_unit = ((re.sub(r" (?!.* )", "\n", selected_data)) + " [cycles]")
+        if selected_data == "m Phase Ambiguity":
+            selected_data_unit = "\u03C3 of Phase Ambiguity [cycles]"
+        else:
+            selected_data_unit = ((re.sub(r" (?!.* )", "\n", selected_data)) + " [cycles]")
+        
     elif selected_data in ["Rec X", "Rec Y", "Rec Z", "Rec N", "Rec E", "Rec U"]:
         selected_data_unit = selected_data + " [m]"
     else:

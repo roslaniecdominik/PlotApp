@@ -7,13 +7,14 @@ def new_columns_solutions(data_list, solutions, data):
                 solution_ranges = {}
                 for i, solution in enumerate(solution_list):
                     solution_ranges[solution] = range(i*50+1, i*50+50)
+
                 if "PRN" in data_list:
                      for solution, num_range in solution_ranges.items():
                         for element in data_list:
                             data[f"{element}_{solution}"] = data[element].where(data["PRN"].isin(num_range))
                 else:
                     for solution, num_range in solution_ranges.items():
-                        for element in data_list:
+                        for element in data_list:                     
                             data[f"{element} {solution}"] = data[element].where(data["PRN"].isin(num_range))
                 return data
 
@@ -29,6 +30,8 @@ def calculate_new_columns(data, selected_datas, solutions, filepath):
                 data["RecdN"] = data["RecN"] - inf_data["RefN"].mean()
                 data["RecdE"] = data["RecE"] - inf_data["RefE"].mean()
                 data["RecdU"] = data["RecU"] - inf_data["RefU"].mean()
+                print(data["RecU"].mean())
+                print(inf_data)
         
         elif selected_data == "REC dXYZ":
             data["RecdX"] = data["RecX"] - data["RecX"].mean()
@@ -58,10 +61,12 @@ def calculate_new_columns(data, selected_datas, solutions, filepath):
         
         elif selected_data == "Code Residuals":
             data_list = ["C_Res1", "C_Res2", "C_Res3", "C_Res4", "C_Res5", "C_Res6", "C_Res7", "C_Res8", "C_Res_IF"]
+
             data = new_columns_solutions(data_list, solutions, data)
-            data["C_Res1 GPS"] = data["C_Res2 GPS"] - data["C_Res1 GPS"]
+
         elif selected_data == "Phase Residuals":
             data_list = ["L_Res1", "L_Res2", "L_Res3", "L_Res4", "L_Res5", "L_Res6", "L_Res7", "L_Res8", "L_Res_IF"]
+
             data = new_columns_solutions(data_list, solutions, data)
 
     return data

@@ -27,6 +27,7 @@ def create_plot(start_time, end_time, filepaths, station_list, selected_station,
 
     else:
         data_listnames = match_data_after(selected_datas, selected_solution)
+
         cut_data, data_listnames = data_filtering(cut_data, data_listnames)
 
         data_colors = match_color(selected_datas, data_listnames)
@@ -35,7 +36,7 @@ def create_plot(start_time, end_time, filepaths, station_list, selected_station,
 
         xaxis_set, xaxis_label = xaxis_config(time_diff, timedelta)    
         start_index = 0
-
+        
 
         def plot(data_listnames, data_colors, selected_datas):
 
@@ -80,9 +81,9 @@ def create_plot(start_time, end_time, filepaths, station_list, selected_station,
                     
                     shapes_data = ["Bad IFree", "No Clock", "No Orbit", "Cycle Slips", "Outliers", "Eclipsing"]
                     shapes = ["s", "x", "+", "^", "o", "D"]
-                    
+
                     for layer_name, color in zip(data_listname, data_color):
-                     
+                        
                         
                         if layer_name == data_listname[1]:
                             invisible_data = [0 for _ in range(cut_data[start_index:].shape[0])]
@@ -97,7 +98,7 @@ def create_plot(start_time, end_time, filepaths, station_list, selected_station,
                             legend_elements.append(Line2D([0], [0], color=color, lw=2, label=layer_name))
                         elif layer_name in shapes_data:
                             index = shapes_data.index(layer_name)
-                            
+
                             if shapes[index] == "o":
                                 scatter = ax.scatter(cut_data["datetime"], cut_data[layer_name], edgecolors=color, facecolors="none", s=20, zorder=3, marker=shapes[index])
                                 legend_elements.append(Line2D([0], [0], marker=shapes[index], color="white", markeredgecolor=color, markerfacecolor="none", markersize=7, label=layer_name))
@@ -131,7 +132,7 @@ def create_plot(start_time, end_time, filepaths, station_list, selected_station,
                             cut_data["datetime"].max() + 0.01*(cut_data["datetime"].max() - cut_data["datetime"].min()))
                 
                 if "RecX" in selected_datas or "RecN" in selected_datas:
-                    ax.yaxis.set_label_coords(-0.09, 0.5)
+                    ax.yaxis.set_label_coords(-0.1, 0.5)
                 else:
                     ax.yaxis.set_label_coords(-0.06, 0.5)
             

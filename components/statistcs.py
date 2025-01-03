@@ -15,8 +15,8 @@ def len_availablePRNs_calculation(df):
 def calc_statistics(data, selected_datas, filepath):
     if len(filepath) > 0:
         dict = {
-            "Crode Residuals": ["C_Res1", "C_Res2", "C_Res3", "C_Res4", "C_Res5", "C_Res6", "C_Res7", "C_Res8", "C_Res_IF"],
-            "Pfhase Residuals": ["L_Res1", "L_Res2", "L_Res3", "L_Res4", "L_Res5", "L_Res6", "L_Res7", "L_Res8", "L_Res_IF"],
+            # "Code Residuals": ["C_Res1", "C_Res2", "C_Res3", "C_Res4", "C_Res5", "C_Res6", "C_Res7", "C_Res8", "C_Res_IF"],
+            # "Phase Residuals": ["L_Res1", "L_Res2", "L_Res3", "L_Res4", "L_Res5", "L_Res6", "L_Res7", "L_Res8", "L_Res_IF"],
             "Satellite Vehicle": ["nG", "nE", "nR", "nC", "nJ", "nGNSS"],
             "DOP factors": ["PDop", "TDop", "HDop", "VDop", "GDop"],
             "Receiver Clock Estimation": ["RecClkG", "RecClkR", "RecClkE", "RecClkC", "RecClkJ", "RecClkS"],
@@ -58,7 +58,8 @@ def calc_statistics(data, selected_datas, filepath):
                         stat_text_list.append(f"{element}: \u03BC = {np.mean(without_nan):.3f}   \u03C3 = {np.std(without_nan):.3f}   \u003C{data[element].min():.3f}; {data[element].max():.3f}\u003E")
                     stat_text = ";  ".join(stat_text_list)
                     stat_list.append(stat_text)
-                    
+                
+
                 if selected_data == "REC dNEU" or selected_data == "REC NEU" or selected_data == "REC XYZ":
                     inf_filepath = list(filter(lambda x: "Inf" in x, filepath))
                     
