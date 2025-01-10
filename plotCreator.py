@@ -222,7 +222,18 @@ def create_plot(start_time, end_time, filepaths, station_list, selected_station,
         data_slider.pack(side=ctk.RIGHT, expand=True, fill=ctk.X, padx=5)
         
         if any(item in single_scatter for item in selected_datas):
+            def show_tooltip(event):
+                tooltip_label.place(x=new_window.winfo_x()*5, y=new_window.winfo_y()*12.85)
+                tooltip_label.lift()
+
+            def hide_tooltip(event):
+                tooltip_label.place_forget()
+
+            tooltip_label = ctk.CTkLabel(new_window, text="Slider is disabled due to large amount of data, use the inputbox in layers panel", fg_color="#F0F0F0", bg_color="#F0F0F0", text_color="black", corner_radius=6)
+            tooltip_label.place_forget()
             data_slider.configure(state="disabled")
+            data_slider.bind("<Enter>", show_tooltip)
+            data_slider.bind("<Leave>", hide_tooltip)
 
 
         
