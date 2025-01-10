@@ -81,20 +81,18 @@ def plot_frames(fig, plot_frame, layers_frame, toolbar_slider_frame, data_merged
                 entry.insert(0, matches[0])
             entry.after(2000, update_entry)
 
-
-    entry = ctk.CTkEntry(toolbar_slider_frame_on, width=198, justify="center")
-    entry.pack(side=ctk.RIGHT, padx=(0,2))
+    entry = ctk.CTkEntry(layers_frame, width=198, justify="center", border_width=0)
+    entry.pack(side=ctk.BOTTOM, padx=5, pady=5)
     entry.insert(0, sol_df.loc[start_index, "datetime"])
     entry.bind("<Return>", entry_event)
+
+    layers_frame_on = ctk.CTkFrame(layers_frame)
+    layers_frame_on.pack(side=ctk.TOP, fill=ctk.X)
+    layers_label = ctk.CTkLabel(layers_frame_on, text="Layers", font=("Helvetica", 22))
+    layers_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 10))
     
     data_slider = ctk.CTkSlider(toolbar_slider_frame_on, from_=0, to=len(sol_df)-1, number_of_steps=len(sol_df)-1, width=700, height=20, command=lambda value: plot_updater_slider(value, lines, axs, data_listname, canvas_plot, data_merged, station_range_text, selected_station, solutions, invisible_lines, selected_secondStation, "cord2", sol_df, entry))
     data_slider.set(start_index)
-    data_slider.pack(side="right", expand=True, padx=5)
+    data_slider.pack(side=ctk.RIGHT, fill=ctk.X, expand=True, padx=5)
 
-
-    layers_frame_on = ctk.CTkFrame(layers_frame)
-    layers_frame_on.pack(side="bottom", fill=ctk.X)
-    layers_label = ctk.CTkLabel(layers_frame_on, text="Layers", font=("Helvetica", 22))
-    layers_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 10))
-
-    return layers_frame_on, widget, toolbar_slider_frame_on
+    return layers_frame_on, widget, toolbar_slider_frame_on, entry

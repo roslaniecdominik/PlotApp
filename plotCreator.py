@@ -210,22 +210,23 @@ def create_plot(start_time, end_time, filepaths, station_list, selected_station,
                 data_entry.after(2000, update_entry)
                 
         
-        data_entry = ctk.CTkEntry(toolbar_slider_frame, width=198, justify="center")
-        data_entry.pack(side=ctk.RIGHT, padx=(0,2))
+
+        right_frame = ctk.CTkFrame(new_window)
+        data_entry = ctk.CTkEntry(right_frame, justify="center", border_width=0)
+        data_entry.pack(side=ctk.BOTTOM, fill=ctk.X, padx=10, pady=10)
         data_entry.insert(0, cut_data.loc[start_index, "datetime"])
         data_entry.bind("<Return>", data_entry_event)
 
-        data_slider = ctk.CTkSlider(toolbar_slider_frame, from_=0, to=cut_data.shape[0]-1, number_of_steps=cut_data.shape[0]-1, width=500, height=20, command=lambda value: plot_updater_slider(value, lines, axs, data_listnames, canvas_plot, cut_data, station_range_text, selected_station, "", invisible_lines, single_scatter, selected_datas, "", data_entry))
+        data_slider = ctk.CTkSlider(toolbar_slider_frame, from_=0, to=cut_data.shape[0]-1, number_of_steps=cut_data.shape[0]-1, height=20, command=lambda value: plot_updater_slider(value, lines, axs, data_listnames, canvas_plot, cut_data, station_range_text, selected_station, "", invisible_lines, single_scatter, selected_datas, "", data_entry))
         data_slider.set(start_index)
-        data_slider.pack(side=ctk.RIGHT, expand=True, padx=5)
+        data_slider.pack(side=ctk.RIGHT, expand=True, fill=ctk.X, padx=5)
         
         if any(item in single_scatter for item in selected_datas):
             data_slider.configure(state="disabled")
 
 
-        right_frame = ctk.CTkFrame(new_window)
-        right_frame.pack(side=ctk.RIGHT, fill=ctk.Y)
         
+        right_frame.pack(side=ctk.RIGHT, fill=ctk.Y)
 
         canvas_frame.pack(side=ctk.TOP, fill="both", expand=True)
         canvas_plot.get_tk_widget().pack(fill=ctk.BOTH, expand=True)
@@ -234,12 +235,13 @@ def create_plot(start_time, end_time, filepaths, station_list, selected_station,
         layers_label = ctk.CTkLabel(right_frame, text="Layers", font=("Helvetica", 22))
         layers_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 10))
 
-        if sum(len(sublist) for sublist in data_listnames) > 19:
+        if sum(len(sublist) for sublist in data_listnames) > 18:
             scrollable_frame = ctk.CTkScrollableFrame(right_frame)
-            scrollable_frame.pack(padx=5, pady=(0,5), fill="both", expand=True)
+            scrollable_frame.pack(padx=10, fill="both", expand=True)
             layer_buttons(fig, axs, data_listnames, scrollable_frame, data_colors)
         else:
             layer_buttons(fig, axs, data_listnames, right_frame, data_colors)
+
 
         if selected_datas == ['RecX', 'RecY', 'RecZ'] or selected_datas == ['RecN', 'RecE', 'RecU']:
             if selected_station in station_list:
@@ -291,4 +293,6 @@ def create_plot(start_time, end_time, filepaths, station_list, selected_station,
 
             error_label = ctk.CTkTextbox(right_frame, font=("Helvetica", 14), text_color="red", wrap="word", fg_color="transparent", cursor="arrow")
             error_label.pack(side=ctk.TOP, fill="both", pady=10)
-            error_label.configure(state="disabled")        
+            error_label.configure(state="disabled")
+        new_window.update_idletasks()
+        canvas_frame.update_idletasks()

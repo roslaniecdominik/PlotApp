@@ -121,10 +121,11 @@ def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, first
 
                     return diff_df
                 
-                global canvas_widget, toolbar_widget, layers_widget, toolbar_slider_frame
+                global canvas_widget, toolbar_widget, layers_widget, entry_widget, toolbar_slider_frame
                 canvas_widget = None
                 toolbar_widget = None
                 layers_widget = None
+                entry_widget= None
 
                 data_listnames = match_data_after(selected_data, solutions)
                 data_listnames = [item for sublist in data_listnames for item in sublist]
@@ -133,7 +134,7 @@ def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, first
 
             
                 def plot_position(plot_frame, layers_frame):
-                    global canvas_widget, toolbar_widget, layers_widget
+                    global canvas_widget, toolbar_widget, layers_widget, entry_widget
                     
                     def layer_buttons_comp(ax, layers_frame_on):
                         def toggle_visibility(name):
@@ -225,15 +226,15 @@ def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, first
 
                     fig.subplots_adjust(left=0.099,right=0.98, hspace=0.4, wspace=0.2)
                     invisible_lines = []
-                    layers_widget, canvas_widget, toolbar_widget = plot_frames(fig, plot_frame, layers_frame, toolbar_slider_frame, data_merged, lines, axs, data_listnames, station_range_text, selected_station_solution, selected_secondStation_solution, solutions, invisible_lines, diff_df, "entry")
+                    layers_widget, canvas_widget, toolbar_widget, entry_widget = plot_frames(fig, plot_frame, layers_frame, toolbar_slider_frame, data_merged, lines, axs, data_listnames, station_range_text, selected_station_solution, selected_secondStation_solution, solutions, invisible_lines, diff_df, "entry")
                     layer_buttons_comp(axs, layers_widget)
                 
                 def plot_ground(plot_frame, layers_frame):
-                    global canvas_widget, toolbar_widget, layers_widget
+                    global canvas_widget, toolbar_widget, layers_widget, entry_widget
 
                     clear_plot()
 
-                    fig, axs = plt.subplots(figsize=(15,5))
+                    fig, axs = plt.subplots(figsize=(10,5))
 
                     x_axs = data_merged.loc[data_merged["Sol"] == solutions[0], data_listnames[0]].reset_index(drop=True)
                     y_axs = data_merged.loc[data_merged["Sol"] == solutions[0], data_listnames[1]].reset_index(drop=True)
@@ -264,7 +265,7 @@ def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, first
 
    
 
-                    layers_widget, canvas_widget, toolbar_widget = plot_frames(fig, plot_frame, layers_frame, toolbar_slider_frame, data_merged, lines, axs, data_listnames[:2], station_range_text, selected_station_solution, selected_secondStation_solution, solutions, invisible_lines, diff_df, "entry")
+                    layers_widget, canvas_widget, toolbar_widget, entry_widget = plot_frames(fig, plot_frame, layers_frame, toolbar_slider_frame, data_merged, lines, axs, data_listnames[:2], station_range_text, selected_station_solution, selected_secondStation_solution, solutions, invisible_lines, diff_df, "entry")
                     
                     def layer_buttons_ground(solutions, layers_frame_on, data_listnames, ax, colors):
                         def toggle_visibility(name):
@@ -275,23 +276,23 @@ def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, first
 
                         for solution, layer, i, color in zip(solutions, data_listnames, range(len(solutions)), colors):
                             layer_label = ctk.CTkLabel(layers_frame_on, text=solution)
-                            layer_label.pack(padx=10, pady=(10,5))
+                            layer_label.pack(padx=15, pady=(10,5))
                             
                             layer_frame = ctk.CTkFrame(layers_frame_on)
                             layer_frame.pack(side=ctk.TOP, padx=10, pady=5)
 
-                            toggle_button = ctk.CTkCheckBox(layer_frame, text="", command=lambda line=ax.collections[i]: toggle_visibility(line))
-                            toggle_button.pack(side=ctk.LEFT)
+                            toggle_button = ctk.CTkCheckBox(layer_frame, text="      ", width=50, command=lambda line=ax.collections[i]: toggle_visibility(line))
+                            toggle_button.pack(side=ctk.LEFT, padx=2, pady=2)
                             toggle_button.select()
 
-                            buttons_line = ctk.CTkFrame(layer_frame, width=100, height=5, fg_color=color)
-                            buttons_line.pack(side=ctk.RIGHT, padx=(0,10))
+                            buttons_line = ctk.CTkFrame(layer_frame, width=50, height=5, fg_color=color)
+                            buttons_line.pack(side=ctk.LEFT, padx=(0, 5))
 
                     layer_buttons_ground([selected_solution, selected_secondSolution], layers_widget, data_listnames, axs, ["limegreen", "orange"])
 
 
                 def clear_plot():
-                    global canvas_widget, toolbar_widget, layers_widget
+                    global canvas_widget, toolbar_widget, layers_widget, entry_widget
 
                     if canvas_widget is not None:
                         canvas_widget.destroy()
@@ -302,6 +303,9 @@ def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, first
                     if layers_widget is not None:
                         layers_widget.destroy()
                         layers_widget = None
+                    if entry_widget is not None:
+                        entry_widget.destroy()
+                        entry_widget = None
 
 
                 def on_option_change(choice):
@@ -347,7 +351,7 @@ def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, first
 
                 toolbar_slider_frame.pack(side=ctk.BOTTOM, fill=ctk.X)
                 plot_frame.pack(side=ctk.LEFT, fill=ctk.BOTH, expand=True)
-                right_frame.pack(side=ctk.RIGHT, fill=ctk.Y)
+                right_frame.pack(side=ctk.RIGHT, fill=ctk.BOTH)
                 plot_view_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 10))
-                plot_view.pack(side=ctk.TOP, pady=(0,20))
-                layers_frame.pack(side=ctk.TOP, fill=ctk.BOTH)
+                plot_view.pack(side=ctk.TOP, pady=(0,20), padx=20)
+                layers_frame.pack(side=ctk.TOP, fill=ctk.BOTH, expand=True)
