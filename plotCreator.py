@@ -72,11 +72,24 @@ def create_plot(start_time, end_time, filepaths, station_list, selected_station,
                 legend_elements = []
 
                 if selected_datas[i] in single_plot or selected_datas[i] in triple_plot:
+                    clk_list = ["RecClkG", "RecClkR", "RecClkE", "RecClkC"]
+
                     for layer_name, color in zip(data_listname, data_color):
-                        line, = ax.plot(cut_data["datetime"], cut_data[layer_name], color=color, linewidth=1, zorder=2)
-                        lines.append(line,)
-                        legend_elements.append(Line2D([0], [0], color=color, lw=2, label=layer_name))
+                        if layer_name in clk_list:
+                            clk_data = cut_data[layer_name]
+                            clk_data = clk_data - clk_data[0]
+
+                            line, = ax.plot(cut_data["datetime"], clk_data, color=color, linewidth=1, zorder=2)
+                            lines.append(line,)
+                            const = "+" if cut_data[layer_name][0] < 0 else ""
+                            legend_elements.append(Line2D([0], [0], color=color, lw=2, label=f"{layer_name}\n{const}{cut_data[layer_name][0]*-1}"))
                         
+                        else:
+                            line, = ax.plot(cut_data["datetime"], cut_data[layer_name], color=color, linewidth=1, zorder=2)
+                            lines.append(line,)
+                            legend_elements.append(Line2D([0], [0], color=color, lw=2, label=layer_name))
+
+                            
                 elif selected_datas[i] in single_scatter:
                     
                     shapes_data = ["Bad IFree", "No Clock", "No Orbit", "Cycle Slips", "Outliers", "Eclipsing"]
@@ -183,7 +196,6 @@ def create_plot(start_time, end_time, filepaths, station_list, selected_station,
                 data_slider.set(value)
                 plot_updater_slider(value, lines, axs, data_listnames, canvas_plot, cut_data, station_range_text, selected_station, "", invisible_lines, single_scatter, selected_datas, "", data_entry)
             else:
-                label = data_entry.get()
                 data_entry.delete(0, ctk.END)
                 default_color = data_entry.cget("text_color")
                 data_entry.configure(text_color="red")

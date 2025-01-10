@@ -30,7 +30,6 @@ def yaxis_label(selected_data):
     m_list = ["RECm XYZ", "REC dNEU", "REC mNEU", "Zenith Tropospheric Delay", "Receiver Clock Estimation", "Code Residuals", "Phase Residuals", "Ionospheric delay"]
     cycles_list = ["Phase Ambiguity", "m Phase Ambiguity"]
 
-    # selected_data = re.sub(r" (?!.* )", "\n", selected_data)
     if selected_data in m_list:
         selected_data_unit = ((re.sub(r" (?!.* )", "\n", selected_data)) + " [m]")
     elif selected_data in cycles_list:

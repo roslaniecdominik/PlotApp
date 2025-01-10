@@ -349,10 +349,8 @@ def triple_plot_corrections(data_listnames, data_colors, selected_datas, triple_
         if selected_datas[i] in triple_plot:
             for j in range(len(data_listnames[i])):
                 new_listname.append([data_listnames[i][j]])
-                # new_listcolors.append([data_colors[i][j]])
         else:
             new_listname.append(data_listnames[i])
-            # new_listcolors.append(data_colors[i])
 
     for el in triple_plot:
         if el in selected_datas:
@@ -366,7 +364,6 @@ def triple_plot_corrections(data_listnames, data_colors, selected_datas, triple_
                 selected_datas[index] = "RecU"
                 selected_datas.insert(index, "RecE")
                 selected_datas.insert(index, "RecN")
-    # new_listcolors = [['springgreen', 'limegreen', 'deepskyblue', 'dodgerblue']]
     return new_listname, new_listcolors, selected_datas
 
 def prn_filtering(filepath):

@@ -53,7 +53,7 @@ def open_options_window(on_selections_change=None, app=None, value_to_add=None, 
         selected_data = [option for option, var in checkbox_states.items() if var.get()]
         if on_selections_change:
             on_selections_change(selected_data)
-        # read_time_in_thread("")
+
         menu_window.destroy()
         data_menu.set("...")
 

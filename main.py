@@ -1,9 +1,10 @@
 import customtkinter as ctk
-from datetime import datetime
-from tkinter import filedialog, messagebox
 import threading
 import pandas as pd
 import numpy as np
+import os
+from datetime import datetime
+from tkinter import filedialog, messagebox
 
 from components.buttonState import buttonState
 from components.centerWindow import center_window
@@ -73,7 +74,7 @@ def create_plot_handler():
 
     data_time.replace([np.inf, -np.inf], np.nan, inplace=True)
     stat_list = calc_statistics(data_time, selected_data, filepaths_cut)
-    
+
     data = cutting_columns(data_time, data_listnames, selected_solution_encoded)
     data = cutting_rows(data, data_listnames)    
     create_plot(start_time, end_time, filepaths, station_list, selected_station_solution, data, selected_data, app, stat_list, selected_solution)
@@ -282,9 +283,20 @@ def read_station():
     loading_check = False
     loading_animation()
 
-def open_file():
+def open_file(statement):
     global filepaths, loading_check
-    filepaths = filedialog.askopenfilenames(filetypes=[("Text files", "*.log")])
+    
+    if statement == "file":
+        filepaths = filedialog.askopenfilenames(filetypes=[("Text files", "*.log")])
+    elif statement == "folder":
+        folder_paths = filedialog.askdirectory(title="Select folder")
+
+        if folder_paths:
+            filepaths = []
+            for item in os.listdir(folder_paths):
+                filepaths.append(f"{folder_paths}/{item}")
+            filepaths = tuple(filepaths)
+
     loading_check = True
     loading_animation()
     loading_station = threading.Thread(target=read_station)
@@ -304,8 +316,10 @@ center_window(app, 700, 500)
 # -File section-
 file_section = ctk.CTkFrame(app, fg_color="transparent")
 file_section.pack(side=ctk.TOP, fill=ctk.BOTH, padx=55, pady=10)
-open_file_button = ctk.CTkButton(file_section, text="Upload file", width=100, bg_color="transparent", command=open_file)
+open_file_button = ctk.CTkButton(file_section, text="Upload file", width=90, bg_color="transparent", command=lambda: open_file("file"))
 open_file_button.pack(side=ctk.LEFT, fill=ctk.BOTH)
+open_catalog_button = ctk.CTkButton(file_section, text="Upload folder", width=90, bg_color="transparent", command=lambda: open_file("folder"))
+open_catalog_button.pack(side=ctk.LEFT, fill=ctk.BOTH, padx=(10,0))
 filename_entry = ctk.CTkEntry(file_section, border_width=0)
 filename_entry.pack(side=ctk.RIGHT, fill=ctk.BOTH, padx=(10,0), expand=True)
 
