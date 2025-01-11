@@ -319,7 +319,7 @@ def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, first
 
                 new_window = ctk.CTkToplevel(app)
                 new_window.title("PLOT")
-                center_window(new_window, 1350, 740)
+                center_window(window=new_window, width=1350, height=740)
                 
                 def new_window_lvl():
                     new_window.attributes("-topmost", False)

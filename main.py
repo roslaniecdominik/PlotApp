@@ -288,22 +288,27 @@ def open_file(statement):
     
     if statement == "file":
         filepaths = filedialog.askopenfilenames(filetypes=[("Text files", "*.log")])
+
     elif statement == "folder":
         folder_paths = filedialog.askdirectory(title="Select folder")
-
+        filepaths = ""
         if folder_paths:
             filepaths = []
             for item in os.listdir(folder_paths):
                 filepaths.append(f"{folder_paths}/{item}")
             filepaths = tuple(filepaths)
 
-    loading_check = True
-    loading_animation()
-    loading_station = threading.Thread(target=read_station)
-    loading_station.start()
-    show_plot_button.configure(state="disabled")
-    configure_data_button.configure(state="disabled")
-    data_menu.configure(state="disabled")
+
+    if len(filepaths) > 0:
+        loading_check = True
+        loading_animation()
+        loading_station = threading.Thread(target=read_station)
+        loading_station.start()
+        show_plot_button.configure(state="disabled")
+        configure_data_button.configure(state="disabled")
+        data_menu.configure(state="disabled")
+    else:
+        station_menu.configure(state="disabled")
 
 
 
@@ -314,7 +319,7 @@ ctk.set_default_color_theme("blue")  # Themes: blue (default), dark-blue, green
 app = ctk.CTk()
 app.title("PlotApp")
 
-center_window(app, 700, 500)
+center_window(window=app, width=700, height=500)
 
 # -File section-
 file_section = ctk.CTkFrame(app, fg_color="transparent")

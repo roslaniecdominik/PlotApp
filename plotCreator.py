@@ -170,7 +170,7 @@ def create_plot(start_time, end_time, filepaths, station_list, selected_station,
         new_window = ctk.CTkToplevel(app)
         new_window.title("PLOT")
 
-        center_window(new_window, 1350, 740)
+        center_window(window=new_window, width=1350, height=740)
 
         def stop():
             new_window.attributes("-topmost", False)
