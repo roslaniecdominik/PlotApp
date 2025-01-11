@@ -77,12 +77,13 @@ def create_plot(start_time, end_time, filepaths, station_list, selected_station,
                     for layer_name, color in zip(data_listname, data_color):
                         if layer_name in clk_list:
                             clk_data = cut_data[layer_name]
-                            clk_data = clk_data - clk_data[0]
+                            correction = next((x for x in clk_data if not np.isnan(x)), None)
+                            clk_data = clk_data - correction
 
                             line, = ax.plot(cut_data["datetime"], clk_data, color=color, linewidth=1, zorder=2)
                             lines.append(line,)
                             const = "+" if cut_data[layer_name][0] < 0 else ""
-                            legend_elements.append(Line2D([0], [0], color=color, lw=2, label=f"{layer_name}\n{const}{cut_data[layer_name][0]*-1}"))
+                            legend_elements.append(Line2D([0], [0], color=color, lw=2, label=f"{layer_name}\n{const}{correction*-1}"))
                         
                         else:
                             line, = ax.plot(cut_data["datetime"], cut_data[layer_name], color=color, linewidth=1, zorder=2)
@@ -221,7 +222,7 @@ def create_plot(start_time, end_time, filepaths, station_list, selected_station,
         data_slider.set(start_index)
         data_slider.pack(side=ctk.RIGHT, expand=True, fill=ctk.X, padx=5)
         
-        if any(item in single_scatter for item in selected_datas):
+        if any(item in single_scatter for item in selected_datas) or (len(cut_data) > 21037 and len(cut_data.columns) < 12):
             def show_tooltip(event):
                 tooltip_label.place(x=new_window.winfo_x()*5, y=new_window.winfo_y()*12.85)
                 tooltip_label.lift()

@@ -76,7 +76,8 @@ def create_plot_handler():
     stat_list = calc_statistics(data=data_time, selected_datas=selected_data, filepath=filepaths_cut)
 
     data = cutting_columns(data_time, data_listnames, selected_solution_encoded)
-    data = cutting_rows(data, data_listnames)    
+    data = cutting_rows(data, data_listnames)
+
     create_plot(start_time, end_time, filepaths, station_list, selected_station_solution, data, selected_data, app, stat_list, selected_solution)
 
 def read_time():

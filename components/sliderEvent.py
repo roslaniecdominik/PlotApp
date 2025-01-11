@@ -1,8 +1,9 @@
 import customtkinter as ctk
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.collections import PathCollection
-from datetime import datetime, timedelta
 
+from datetime import datetime, timedelta
 from components.dataConfiguration import transform_numbers_column
 
 def time_updater (time, year_entry, hour_entry, year_slider, selected_year_label, selected_hour_label, time_dif):
@@ -275,8 +276,14 @@ def plot_updater_slider(value, lines, axss, data_listnames, canvas_plot, cut_dat
                         for invisible_line, invisible_data in zip(invisible_lines, invisible_datas):
                             invisible_line.set_data(cut_data['datetime'][start_index:], invisible_data)
                     elif isinstance(line, plt.Line2D):
-                        # wszystkie single liniowe, działa pojedyńczy triple, działa podwójny triple, działa mix triple z single
-                        line.set_data(cut_data['datetime'][start_index:], cut_data[data_listname][start_index:])
+                        # all single line, single triplne, double triple, mix triple with single
+                        if data_listname in ["RecClkG", "RecClkR", "RecClkE", "RecClkC", "RecClkJ", "RecClkS"]:
+                            clk_data = cut_data[data_listname]
+                            correction = next((x for x in clk_data if not np.isnan(x)), None)
+                            clk_data = clk_data - correction
+                            line.set_data(cut_data['datetime'][start_index:], clk_data[start_index:])
+                        else:
+                            line.set_data(cut_data['datetime'][start_index:], cut_data[data_listname][start_index:])
                     for axs in axss:
                         axs.set_xlim(cut_data["datetime"][start_index:].min() - 0.01*(cut_data["datetime"].max() - cut_data["datetime"].min()), 
                                      cut_data["datetime"][start_index:].max() + 0.01*(cut_data["datetime"].max() - cut_data["datetime"].min()))
