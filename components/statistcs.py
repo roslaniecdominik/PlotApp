@@ -12,7 +12,7 @@ def len_availablePRNs_calculation(df):
     available_prn = result['AvailablePRNs'].apply(lambda x: len(x.split())).sum()
     return available_prn
 
-def calc_statistics(data, selected_datas, filepath):
+def calc_statistics(data=None, selected_datas=None, filepath="None"):
     if len(filepath) > 0:
         dict = {
             "Code Residuals": ["C_Res1", "C_Res2", "C_Res3", "C_Res4", "C_Res5", "C_Res6", "C_Res7", "C_Res8", "C_Res_IF"],
@@ -26,7 +26,9 @@ def calc_statistics(data, selected_datas, filepath):
             "Zenith Tropospheric Delay" : ["ZTD"],
             "REC XYZ": ["RecX", "RecY", "RecZ"],
             "REC NEU": ["RecN", "RecE", "RecU"],
-            "PRN": ["Outliers"]
+            "PRN": ["Outliers"],
+            "REC NEU diff": ["RecN", "RecE", "RecU"],
+            "REC XYZ diff": ["RecX", "RecY", "RecZ"]
         }
         stat_list = []
         for selected_data in selected_datas:
@@ -49,7 +51,7 @@ def calc_statistics(data, selected_datas, filepath):
                     stat_text = ";  ".join(stat_text_list)
                     stat_list.append(stat_text)
                 
-                if selected_data in ["Receiver Clock Estimation", "REC mNEU", "Zenith Tropospheric Delay", "REC mXYZ"]:
+                if selected_data in ["Receiver Clock Estimation", "REC mNEU", "Zenith Tropospheric Delay", "REC mXYZ", "REC NEU diff", "REC XYZ diff"]:
                     data_listnames = [col for col in data_listnames if not (data[col].isna().all() or (data[col].fillna(0) == 0).all())] #removes if 0/NaN in all
                     stat_text_list = []
 

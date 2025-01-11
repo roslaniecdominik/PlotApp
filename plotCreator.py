@@ -19,7 +19,7 @@ from comparingPlotCreator import comparing_window
 
 data_dict, single_scatter, single_plot, triple_plot = defining_data()
 
-def create_plot(start_time, end_time, filepaths, station_list, selected_station, cut_data, selected_datas, app, stat_list, selected_solution):
+def create_plot(start_time, end_time, filepaths, station_list, selected_station, cut_data, selected_datas, app, statistics_list, selected_solution):
     global loading_check
 
     if start_time > end_time:
@@ -132,7 +132,7 @@ def create_plot(start_time, end_time, filepaths, station_list, selected_station,
                     invisible_line, = ax.plot(cut_data["datetime"], invisible_data, color='none')
                     invisible_lines.append(invisible_line)
                 
-                t = ax.text(0.02, 0.99, stat_list[i], fontsize=7, color='black', ha='left', va='bottom', transform=ax.transAxes)
+                t = ax.text(0.02, 0.99, statistics_list[i], fontsize=7, color='black', ha='left', va='bottom', transform=ax.transAxes)
                 t.set_bbox(dict(facecolor='white', alpha=1, edgecolor='white', pad=0.2, boxstyle="round"))
                 
                 ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), handles=legend_elements)

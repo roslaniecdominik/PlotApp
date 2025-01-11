@@ -132,7 +132,10 @@ def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, first
                 data_colors = ["red", "green", "blue"]
                 diff_df = difference_dataframe(data_merged, data_listnames, solutions).reset_index(drop=True)
 
-            
+                statistics_list = calc_statistics(data=diff_df, selected_datas=[selected_data[0]+" diff"])
+                statistics_list = [item.strip() for item in statistics_list[0].split(';  ')]
+ 
+
                 def plot_position(plot_frame, layers_frame):
                     global canvas_widget, toolbar_widget, layers_widget, entry_widget
                     
@@ -191,9 +194,12 @@ def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, first
                         line, = ax[0].plot(diff_df["datetime"], data_list1, color="limegreen", linewidth=1, zorder=2, label=f"{data_listname} {solution_generator(solutions[0])}")
                         lines.append(line,)
                         line, = ax[0].plot(diff_df["datetime"], data_list2, color="orange", linewidth=1, zorder=2, label=f"{data_listname} {solution_generator(solutions[1])}")
+                        lines.append(line,)                        
+                        line, = ax[1].plot(diff_df["datetime"], diff_df[data_listname], color=data_colors[i], linewidth=1, zorder=2, label=f"\u0394 {data_listname}")
                         lines.append(line,)
-                        line, = ax[1].plot(diff_df["datetime"], diff_df[data_listname], color=data_colors[i], linewidth=1, zorder=2, label=f"{data_listname} diff")
-                        lines.append(line,)
+
+                        t = ax[1].text(0.02, 0.99, f"\u0394 {statistics_list[i]}", fontsize=7, color='black', ha='left', va='bottom', transform=ax[1].transAxes)
+                        t.set_bbox(dict(facecolor='white', alpha=1, edgecolor='white', pad=0.2, boxstyle="round"))
                         
                         for j in range(len(ax)):
                             ax[j].legend()
@@ -201,10 +207,9 @@ def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, first
                             ax[j].xaxis.set_tick_params(labelbottom=False)
                             ax[j].yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
                             ax[j].ticklabel_format(useOffset=False, axis='y', style='plain')
-                            ax[j].set_ylabel(yaxis_label(data_listnames[i]) + " [m]")
                             ax[j].set_xlim(data_merged["datetime"].min() - 0.01*(data_merged["datetime"].max() - data_merged["datetime"].min()), 
                                         data_merged["datetime"].max() + 0.01*(data_merged["datetime"].max() - data_merged["datetime"].min()))
-                            
+                        ax[1].set_ylabel(yaxis_label(f"\u0394 {data_listnames[i]} [m]"))
 
                     extend_time = f"{datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")}  -  {datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")}"
                     station_range_text = fig.suptitle(f"{selected_station_solution} vs {selected_secondStation_solution}      {extend_time}", fontsize=11, color='black', y=0.95)
@@ -262,6 +267,8 @@ def comparing_window(secondStation_menu_fullVar, filepaths, selected_data, first
 
                     axs.xaxis.set_major_formatter(formatter)
                     axs.yaxis.set_major_formatter(formatter)
+                    t = axs.text(0.02, 0.99, f"\u0394 {statistics_list[0]}; \u0394 {statistics_list[1]}", fontsize=7, color='black', ha='left', va='bottom', transform=axs.transAxes)
+                    t.set_bbox(dict(facecolor='white', alpha=1, edgecolor='white', pad=0.2, boxstyle="round"))
 
    
 

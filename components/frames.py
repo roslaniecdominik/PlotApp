@@ -91,7 +91,7 @@ def plot_frames(fig, plot_frame, layers_frame, toolbar_slider_frame, data_merged
     layers_label = ctk.CTkLabel(layers_frame_on, text="Layers", font=("Helvetica", 22))
     layers_label.pack(side=ctk.TOP, fill=ctk.X, pady=(10, 10))
     
-    data_slider = ctk.CTkSlider(toolbar_slider_frame_on, from_=0, to=len(sol_df)-1, number_of_steps=len(sol_df)-1, width=700, height=20, command=lambda value: plot_updater_slider(value, lines, axs, data_listname, canvas_plot, data_merged, station_range_text, selected_station, solutions, invisible_lines, selected_secondStation, "cord2", sol_df, entry))
+    data_slider = ctk.CTkSlider(toolbar_slider_frame_on, from_=0, to=len(sol_df)-1, number_of_steps=len(sol_df)-1, width=650, height=20, command=lambda value: plot_updater_slider(value, lines, axs, data_listname, canvas_plot, data_merged, station_range_text, selected_station, solutions, invisible_lines, selected_secondStation, "cord2", sol_df, entry))
     data_slider.set(start_index)
     data_slider.pack(side=ctk.RIGHT, fill=ctk.X, expand=True, padx=5)
 

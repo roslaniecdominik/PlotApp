@@ -73,7 +73,7 @@ def create_plot_handler():
     data_listnames = match_data_after(selected_data, selected_solution)
 
     data_time.replace([np.inf, -np.inf], np.nan, inplace=True)
-    stat_list = calc_statistics(data_time, selected_data, filepaths_cut)
+    stat_list = calc_statistics(data=data_time, selected_datas=selected_data, filepath=filepaths_cut)
 
     data = cutting_columns(data_time, data_listnames, selected_solution_encoded)
     data = cutting_rows(data, data_listnames)    
