@@ -1,4 +1,5 @@
 import customtkinter as ctk
+from components.centerWindow import center_window
 
 def open_options_window(on_selections_change=None, app=None, value_to_add=None, data_menu=None):
     points = {
@@ -43,14 +44,23 @@ def open_options_window(on_selections_change=None, app=None, value_to_add=None, 
 
     menu_window = ctk.CTkToplevel(app)
     menu_window.title("Options")
-    menu_height = (len(value_to_add)+1) * 30 + 60
-    menu_window.geometry(f"200x{menu_height}")
+    
+    if len(value_to_add) > 13:
+        var_frame = ctk.CTkScrollableFrame(menu_window, fg_color="transparent")
+        height = 500
+    else:
+        var_frame = ctk.CTkFrame(menu_window, fg_color="transparent")
+        height = 50 + 35*len(value_to_add)
+
+    center_window(window=menu_window, width=250, height=height, info="customize")
+
+    if len(value_to_add) != 0: var_frame.pack(side=ctk.TOP, fill=ctk.BOTH, expand=True)
 
     checkboxes = {}
     for option, points in value_to_add_dict.items():
         var = ctk.BooleanVar()
         checkbox_states[option] = var
-        checkbox = ctk.CTkCheckBox(menu_window, text=option, variable=var, command=on_checbox_change)
+        checkbox = ctk.CTkCheckBox(var_frame, text=option, variable=var, command=on_checbox_change)
         checkbox.pack(anchor="w", padx=10, pady=5)
         checkboxes[option] = checkbox
 
@@ -64,4 +74,4 @@ def open_options_window(on_selections_change=None, app=None, value_to_add=None, 
         data_menu.set("...")
 
     close_button = ctk.CTkButton(menu_window, text="Save", command=save_selection, state="disabled")
-    close_button.pack(pady=10)
+    close_button.pack(side=ctk.BOTTOM, pady=10)
