@@ -27,7 +27,13 @@ def open_options_window(on_selections_change=None, app=None, value_to_add=None, 
             value_to_add_dict[value] = points[value]
 
     def on_checbox_change():
+
         selected_points = sum(value_to_add_dict[point] for point, var in checkbox_states.items() if var.get())
+
+        if any(var.get() for var in checkbox_states.values()):
+            close_button.configure(state="normal")
+        else:
+            close_button.configure(state="disabled")
 
         for point, var in checkbox_states.items():
             if not var.get() and selected_points + value_to_add_dict[point] > max_points:
@@ -57,5 +63,5 @@ def open_options_window(on_selections_change=None, app=None, value_to_add=None, 
         menu_window.destroy()
         data_menu.set("...")
 
-    close_button = ctk.CTkButton(menu_window, text="Save", command=save_selection)
+    close_button = ctk.CTkButton(menu_window, text="Save", command=save_selection, state="disabled")
     close_button.pack(pady=10)

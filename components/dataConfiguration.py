@@ -313,31 +313,41 @@ def merge_data(data, selected_data, filepath):
 
 
 def data_filtering(data, data_listnames):
+
     for j in range(len(data_listnames)):
 
+        cutted_data_listnames = [col for col in data_listnames[j] if col in data.columns]
+        data_listnames[j] = cutted_data_listnames
         index_to_del = [i for i, col in enumerate(data_listnames[j]) if data[col].replace(0, np.nan).isna().all()]
         columns_to_del = [data_listnames[j][i] for i in index_to_del]
-
         data = data.drop(columns=columns_to_del)
         
         for i in sorted(index_to_del, reverse=True): del data_listnames[j][i]
- 
+
         data = data.replace(0, np.nan)
 
     return data, data_listnames
     
 def cutting_columns(dataframe, data_listname, selected_solution):
+
     cut_column = []
     [cut_column.extend(i) for i in data_listname]
+
     cut_column.insert(0, "datetime")
-    cut_data = dataframe[cut_column]
+    cut_data = dataframe[[col for col in cut_column if col in dataframe.columns]]
     cut_data = cut_data.copy()
     cut_data.loc[:, "Sol"] = selected_solution
+
     return cut_data
 
 def cutting_rows(dataframe, data_listname):
+
     data_listname = [item for sublist in data_listname for item in sublist]
-    data = dataframe.iloc[:dataframe[data_listname].notna().any(axis=1)[::-1].idxmax() + 1]
+
+    if all(col in dataframe.columns for col in data_listname):
+        data = dataframe.iloc[:dataframe[data_listname].notna().any(axis=1)[::-1].idxmax() + 1]
+    else:
+        data = dataframe
 
     return data
 

@@ -42,13 +42,15 @@ def calculate_new_columns(data, selected_datas, solutions, filepath):
         elif selected_data == "PRN":
             data_list = ["PRN"]
             data = new_columns_solutions(data_list, solutions, data)
-            data["Bad IFree"] = np.where(data["Typ"] == "BIF", data["PRN_sign"], np.nan)
-            data["No Clock"] = np.where(data["Typ"] == "NCL", data["PRN_sign"], np.nan)
-            data["No Orbit"] = np.where(data["Typ"] == "NOR", data["PRN_sign"], np.nan)
-            data["Cycle Slips"] = np.where(data["Typ"] == "CSL", data["PRN_sign"], np.nan)
-            data["Outliers"] = np.where(data["Typ"] == "OUT", data["PRN_sign"], np.nan)
-            data["Eclipsing"] = np.where(data["Typ"] == "ECL", data["PRN_sign"], np.nan)
-        
+            try:
+                data["Bad IFree"] = np.where(data["Typ"] == "BIF", data["PRN_sign"], np.nan)
+                data["No Clock"] = np.where(data["Typ"] == "NCL", data["PRN_sign"], np.nan)
+                data["No Orbit"] = np.where(data["Typ"] == "NOR", data["PRN_sign"], np.nan)
+                data["Cycle Slips"] = np.where(data["Typ"] == "CSL", data["PRN_sign"], np.nan)
+                data["Outliers"] = np.where(data["Typ"] == "OUT", data["PRN_sign"], np.nan)
+                data["Eclipsing"] = np.where(data["Typ"] == "ECL", data["PRN_sign"], np.nan)
+            except:
+                 pass
         elif selected_data == "Phase Ambiguity":
             data_list = ["N_IF", "N_L1", "N_L2", "N_L3", "N_L4", "N_L5", "N_L6", "N_L7", "N_L8"]
             data = new_columns_solutions(data_list, solutions, data)

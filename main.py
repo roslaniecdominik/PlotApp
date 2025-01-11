@@ -302,6 +302,9 @@ def open_file(statement):
     loading_station = threading.Thread(target=read_station)
     loading_station.start()
     show_plot_button.configure(state="disabled")
+    configure_data_button.configure(state="disabled")
+    data_menu.configure(state="disabled")
+
 
 
 # -Main window-
