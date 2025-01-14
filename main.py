@@ -175,11 +175,12 @@ def read_data(event):
     selected_solution_encoded = solution_generator(selected_solution)
 
     filepaths_cut = [filepath for filepath in filepaths if selected_station in filepath and selected_solution_encoded in filepath]
-
+    filepaths_cut = [file for file in filepaths_cut if file.endswith(".log")]
     
     data_dict, single_scatter, single_plot, triple_plot = defining_data()
 
     various_data = []
+    
     for filepath in filepaths_cut:
         with open(filepath, "r") as file:
             first_row = file.readline()
