@@ -81,7 +81,7 @@ def create_plot_handler():
     create_plot(start_time, end_time, filepaths, station_list, selected_station_solution, data, selected_data, app, stat_list, selected_solution)
 
 def read_time():
-    global data_all_columns, selected_data, filepath, loading_check, time_range, time_dif, selected_solution_encoded, stat_list
+    global data_all_columns, selected_data, filepath, loading_check, time_range, time_dif, selected_solution_encoded, stat_list, filepaths_cut
 
     show_plot_button.configure(state="disabled")
 
@@ -175,8 +175,7 @@ def read_data(event):
     selected_solution_encoded = solution_generator(selected_solution)
 
     filepaths_cut = [filepath for filepath in filepaths if selected_station in filepath and selected_solution_encoded in filepath]
-    filepaths_cut = [file for file in filepaths_cut if file.endswith(".log")]
-    
+
     data_dict, single_scatter, single_plot, triple_plot = defining_data()
 
     various_data = []
@@ -302,6 +301,7 @@ def open_file(statement):
 
 
     if len(filepaths) > 0:
+        filepaths = [file for file in filepaths if file.endswith(".log")]
         loading_check = True
         loading_animation()
         loading_station = threading.Thread(target=read_station)
